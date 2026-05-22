@@ -1,42 +1,7 @@
-let products = JSON.parse(localStorage.getItem('products')) || [
-  {
-    id: 1,
-    name: "Tonal krem SPF30",
-    brand: "Laneige",
-    category: "yuz",
-    price: "35,000 ₩",
-    image: "https://placehold.co/300x300/fce4ec/c2185b?text=Laneige",
-    inStock: true
-  },
-  {
-    id: 2,
-    name: "Lipstic matoviy №14",
-    brand: "3CE",
-    category: "lablar",
-    price: "18,000 ₩",
-    image: "https://placehold.co/300x300/fce4ec/c2185b?text=3CE",
-    inStock: true
-  },
-  {
-    id: 3,
-    name: "Tush hajmli",
-    brand: "Clio",
-    category: "kozlar",
-    price: "22,000 ₩",
-    image: "https://placehold.co/300x300/fce4ec/c2185b?text=Clio",
-    inStock: false
-  },
-  {
-    id: 4,
-    name: "Vitamin C serumi",
-    brand: "Some By Mi",
-    category: "parvarish",
-    price: "29,000 ₩",
-    image: "https://placehold.co/300x300/fce4ec/c2185b?text=SomeByMi",
-    inStock: true
-  }
-];
+const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
 
+let products = [];
 let categories = JSON.parse(localStorage.getItem('categories')) || [
   { id: 'barchasi', label: 'Barchasi' },
   { id: 'yuz', label: 'Yuz' },
@@ -46,6 +11,31 @@ let categories = JSON.parse(localStorage.getItem('categories')) || [
 ];
 
 let currentCategory = 'barchasi';
+
+async function loadProducts() {
+  try {
+    const res = await fetch(SHEET_URL);
+    const text = await res.text();
+    const json = JSON.parse(text.substring(47).slice(0, -2));
+    const rows = json.table.rows;
+
+    products = rows.map(row => ({
+      id: row.c[0]?.v || Date.now(),
+      name: row.c[1]?.v || '',
+      brand: row.c[2]?.v || '',
+      category: row.c[3]?.v || '',
+      price: row.c[4]?.v + ' ₩' || '',
+      image: row.c[5]?.v || 'https://placehold.co/300x300/f0f0f0/999?text=?',
+      description: row.c[6]?.v || '',
+      inStock: row.c[7]?.v === true || row.c[7]?.v === 'TRUE'
+    }));
+
+    renderCategories();
+    filterProducts();
+  } catch (e) {
+    console.error('Xato:', e);
+  }
+}
 
 function saveData() {
   localStorage.setItem('products', JSON.stringify(products));
@@ -117,6 +107,11 @@ card.onclick = (e) => {
 
 // АДМИНКА
 function openAdmin() {
+  const password = prompt('Parol:');
+  if (password !== '1234') {
+    alert('Noto\'g\'ri parol');
+    return;
+  }
   renderProductList();
   renderCategoryList();
   document.getElementById('adminModal').classList.add('open');
@@ -366,6 +361,5 @@ function slidePhoto(dir) {
 
 
 // СТАРТ
-renderCategories();
-filterProducts();
+loadProducts();
 updateCategorySelect();
