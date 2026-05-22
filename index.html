@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kosmetika do'koni</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="header">✨ Kosmetika</div>
+
+  <div class="search">
+    <input type="text" id="searchInput" placeholder="Brend bo'yicha qidirish..." oninput="filterProducts()">
+  </div>
+
+  <div class="categories" id="categories"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <button class="admin-btn" onclick="openAdmin()">⚙️</button>
+
+  <!-- АДМИНКА -->
+  <div class="modal" id="adminModal">
+    <div class="modal-box">
+      <h2>Boshqaruv paneli</h2>
+
+      <!-- Добавить товар -->
+      <p style="font-size:13px;color:#999;margin-bottom:8px">Yangi mahsulot qo'shish</p>
+      <input type="text" id="newName" placeholder="Nomi" autocomplete="off">
+      <input type="text" id="newBrand" placeholder="Brend" autocomplete="off">
+      <input type="text" id="newPrice" placeholder="Narx (masalan: 25,000 ₩)" autocomplete="off">
+      <input type="text" id="newImage" placeholder="Rasm havolasi (URL)" autocomplete="off">
+      <input type="text" id="newDescription" placeholder="Tavsif (ixtiyoriy)" autocomplete="off">
+      <select id="newCategory"></select>
+      <select id="newStock">
+        <option value="true">Mavjud</option>
+        <option value="false">Mavjud emas</option>
+      </select>
+      <button class="save-btn" onclick="addProduct()">Qo'shish</button>
+
+      <!-- Список товаров -->
+      <p style="font-size:13px;color:#999;margin:16px 0 8px">Mahsulotlar</p>
+      <div class="product-list" id="productList"></div>
+
+      <!-- Категории -->
+      <p style="font-size:13px;color:#999;margin:16px 0 8px">Kategoriyalar</p>
+      <input type="text" id="newCatLabel" placeholder="Yangi kategoriya nomi">
+      <button class="save-btn" onclick="addCategory()">Kategoriya qo'shish</button>
+      <div class="product-list" id="categoryList"></div>
+
+      <button class="close-btn" onclick="closeAdmin()">Yopish</button>
+    </div>
+  </div>
+
+
+  <!-- Модальное окно товара -->
+<div class="product-modal" id="productModal">
+  <div class="product-modal-box" style="position:relative">
+    <button class="product-modal-close" onclick="closeProduct()">✕</button>
+    <div class="slider" id="productSlider">
+      <button class="slider-btn prev" onclick="slidePhoto(-1)">‹</button>
+      <button class="slider-btn next" onclick="slidePhoto(1)">›</button>
+      <div class="slider-dots" id="sliderDots"></div>
+    </div>
+    <div class="product-modal-body">
+      <div class="brand" id="modalBrand"></div>
+      <div class="name" id="modalName"></div>
+      <div class="price" id="modalPrice"></div>
+      <span class="badge" id="modalBadge"></span>
+      <div class="description" id="modalDescription"></div>
+      <button class="order-btn" id="modalOrderBtn">Sotuvchiga yozish</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal" id="editModal">
+  <div class="modal-box">
+    <h2>Mahsulotni tahrirlash</h2>
+    <input type="text" id="editName" placeholder="Nomi" autocomplete="off">
+    <input type="text" id="editBrand" placeholder="Brend" autocomplete="off">
+    <input type="text" id="editPrice" placeholder="Narx (raqam)" autocomplete="off">
+    <input type="text" id="editImage" placeholder="Rasm URL" autocomplete="off">
+    <input type="text" id="editDescription" placeholder="Tavsif" autocomplete="off">
+    <select id="editCategory"></select>
+    <select id="editStock">
+      <option value="true">Mavjud</option>
+      <option value="false">Mavjud emas</option>
+    </select>
+    <button class="save-btn" onclick="saveEdit()">Saqlash</button>
+    <button class="close-btn" onclick="closeEdit()">Bekor qilish</button>
+  </div>
+</div>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
