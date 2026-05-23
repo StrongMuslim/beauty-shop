@@ -198,8 +198,7 @@ function editProduct(index) {
   document.getElementById('editName').value = p.name;
   document.getElementById('editBrand').value = p.brand;
   document.getElementById('editPrice').value = p.price.replace(' ₩', '');
-  document.getElementById('editImage').value = p.image;
-  document.getElementById('editDescription').value = p.description || '';
+  document.getElementById('editImage').value = p.images?.[0] || '';  document.getElementById('editDescription').value = p.description || '';
   document.getElementById('editStock').value = p.inStock ? 'true' : 'false';
 
   const select = document.getElementById('editCategory');
@@ -234,7 +233,7 @@ async function saveEdit() {
         data: {
           name, brand, category,
           price,
-          image: image || products[editIndex].images[0],
+          images: image || products[editIndex].images[0],
           description,
           inStock
         }
