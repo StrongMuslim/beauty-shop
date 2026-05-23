@@ -1,37 +1,50 @@
 const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
+const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyyFDZ9g4Txp-kikKKyKTUcmDzkBDdXj5-31qq2Y4UMZIKvJxwQCl1yrhF5zSCdyrOo/exec';
 let products = [];
-let categories = JSON.parse(localStorage.getItem('categories')) || [
-  { id: 'barchasi', label: 'Barchasi' },
-  { id: 'yuz', label: 'Yuz' },
-  { id: 'lablar', label: 'Lablar' },
-  { id: 'kozlar', label: "Ko'zlar" },
-  { id: 'parvarish', label: 'Parvarish' }
-];
+let categories = [{ id: 'barchasi', label: 'Barchasi' }];
 
 let currentCategory = 'barchasi';
 
 async function loadProducts() {
   try {
-    const res = await fetch(SHEET_URL);
-    const text = await res.text();
-    const json = JSON.parse(text.substring(47).slice(0, -2));
-    const rows = json.table.rows;
+    const [productsRes, categoriesRes] = await Promise.all([
+      fetch(SHEET_URL),
+      fetch(CAT_URL)
+    ]);
 
-    products = rows.map(row => ({
+    const productsText = await productsRes.text();
+    const categoriesText = await categoriesRes.text();
+
+    const productsJson = JSON.parse(productsText.substring(47).slice(0, -2));
+    const categoriesJson = JSON.parse(categoriesText.substring(47).slice(0, -2));
+
+    products = productsJson.table.rows.map(row => ({
       id: row.c[0]?.v || Date.now(),
       name: row.c[1]?.v || '',
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
-      price: row.c[4]?.v + ' ₩' || '',
-      image: row.c[5]?.v || 'https://placehold.co/300x300/f0f0f0/999?text=?',
+      price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
+      images: row.c[5]?.v ? row.c[5].v.split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
       description: row.c[6]?.v || '',
       inStock: row.c[7]?.v === true || row.c[7]?.v === 'TRUE'
     }));
 
+    const catRows = categoriesJson.table.rows.slice(1);
+categories = [
+  { id: 'barchasi', label: 'Barchasi' },
+  ...catRows
+    .filter(row => row.c[0]?.v && row.c[1]?.v)
+    .map(row => ({
+      id: row.c[0].v,
+      label: row.c[1].v
+    }))
+];
+
     renderCategories();
     filterProducts();
+    updateCategorySelect();
   } catch (e) {
     console.error('Xato:', e);
   }
@@ -86,7 +99,7 @@ card.onclick = (e) => {
   openProduct(products.indexOf(p));
 };
     card.innerHTML = `
-      <img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">
+      <img src="${p.images[0]}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">
       <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
@@ -94,6 +107,11 @@ card.onclick = (e) => {
         <span class="badge ${p.inStock ? 'in-stock' : 'out-stock'}">
           ${p.inStock ? 'Mavjud' : 'Mavjud emas'}
         </span>
+        <button class="order-btn" style="background:#fff;color:#222;border:1px solid #222;margin-bottom:6px"
+             ${!p.inStock ? 'disabled style="background:#f5f5f5;color:#ccc;border-color:#ccc"' : ''}
+              onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+             Savatga qo'shish
+        </button>
         <button class="order-btn"
           ${!p.inStock ? 'disabled' : ''}
           onclick="window.open('https://t.me/sayf1n?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
@@ -106,6 +124,23 @@ card.onclick = (e) => {
 }
 
 // АДМИНКА
+let tapCount = 0;
+let tapTimer = null;
+
+function handleAdminTap() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => {
+    tapCount = 0;
+  }, 2000);
+
+  if (tapCount >= 5) {
+    tapCount = 0;
+    openAdmin();
+  }
+}
+
+
 function openAdmin() {
   const password = prompt('Parol:');
   if (password !== '1234') {
@@ -138,12 +173,22 @@ function renderProductList() {
   });
 }
 
-function deleteProduct(index) {
+async function deleteProduct(index) {
   if (confirm('Mahsulotni o\'chirasizmi?')) {
-    products.splice(index, 1);
-    saveData();
-    renderProductList();
-    filterProducts();
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'delete',
+          id: products[index].id
+        })
+      });
+      await loadProducts();
+      renderProductList();
+    } catch (e) {
+      alert('Xato yuz berdi');
+      console.error(e);
+    }
   }
 }
 
@@ -170,7 +215,7 @@ function editProduct(index) {
   document.getElementById('editModal').classList.add('open');
 }
 
-function saveEdit() {
+async function saveEdit() {
   const name = document.getElementById('editName').value.trim();
   const brand = document.getElementById('editBrand').value.trim();
   const price = document.getElementById('editPrice').value.trim();
@@ -184,55 +229,72 @@ function saveEdit() {
     return;
   }
 
-  products[editIndex] = {
-    ...products[editIndex],
-    name, brand, category,
-    price: price + ' ₩',
-    image: image || products[editIndex].image,
-    description,
-    inStock
-  };
-
-  saveData();
-  filterProducts();
-  closeEdit();
-  document.getElementById('adminModal').classList.add('open');
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'edit',
+        id: products[editIndex].id,
+        name, brand, category,
+        price,
+        images: image || products[editIndex].images.join(','),
+        description,
+        inStock
+      })
+    });
+    await loadProducts();
+    closeEdit();
+    document.getElementById('adminModal').classList.add('open');
+  } catch (e) {
+    alert('Xato yuz berdi');
+    console.error(e);
+  }
 }
 
 function closeEdit() {
   document.getElementById('editModal').classList.remove('open');
 }
 
-function addProduct() {
+async function addProduct() {
   const name = document.getElementById('newName').value.trim();
   const brand = document.getElementById('newBrand').value.trim();
   const category = document.getElementById('newCategory').value;
   const price = document.getElementById('newPrice').value.trim();
   const image = document.getElementById('newImage').value.trim();
-const description = document.getElementById('newDescription').value.trim();
-const inStock = document.getElementById('newStock').value === 'true';
+  const description = document.getElementById('newDescription').value.trim();
+  const inStock = document.getElementById('newStock').value === 'true';
+
   if (!name || !brand || !price) {
-    alert('Ism, brend va narxni kiriting');
+    alert('Nomi, brend va narxni kiriting');
     return;
   }
 
-  products.push({
+  const newProduct = {
+    action: 'add',
     id: Date.now(),
     name, brand, category,
-    price: price + ' ₩',
-    image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
+    price,
+    images: image || '',
     description,
     inStock
-  });
+  };
 
-  saveData();
-  renderProductList();
-  filterProducts();
-
-  document.getElementById('newName').value = '';
-  document.getElementById('newBrand').value = '';
-  document.getElementById('newPrice').value = '';
-  document.getElementById('newImage').value = '';
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify(newProduct)
+    });
+    await loadProducts();
+    document.getElementById('newName').value = '';
+    document.getElementById('newBrand').value = '';
+    document.getElementById('newPrice').value = '';
+    document.getElementById('newImage').value = '';
+    document.getElementById('newDescription').value = '';
+    alert('Mahsulot qo\'shildi!');
+  } catch (e) {
+    alert('Xato yuz berdi');
+    console.error(e);
+  }
 }
 
 function renderCategoryList() {
@@ -285,8 +347,7 @@ let currentPhotos = [];
 function openProduct(index) {
   const p = products[index];
   currentSlide = 0;
-  currentPhotos = p.images ? p.images : [p.image];
-
+  currentPhotos = p.images || ['https://placehold.co/300x300/f0f0f0/999?text=?'];
   // Фото слайдер
   const slider = document.getElementById('productSlider');
   const dots = document.getElementById('sliderDots');
@@ -363,3 +424,107 @@ function slidePhoto(dir) {
 // СТАРТ
 loadProducts();
 updateCategorySelect();
+
+// КОРЗИНА
+let cart = [];
+
+function addToCart(product) {
+  const existing = cart.find(item => item.id === product.id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({ ...product, quantity: 1 });
+  }
+  updateCartCount();
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  updateCartCount();
+  renderCart();
+}
+
+function updateCartCount() {
+  const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const badge = document.getElementById('cartCount');
+  if (count > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openCart() {
+  renderCart();
+  document.getElementById('cartModal').classList.add('open');
+}
+
+function closeCart() {
+  document.getElementById('cartModal').classList.remove('open');
+}
+
+function renderCart() {
+  const list = document.getElementById('cartList');
+  const total = document.getElementById('cartTotal');
+  const orderBtn = document.getElementById('cartOrderBtn');
+
+  if (cart.length === 0) {
+    list.innerHTML = '<div class="cart-empty">Savat bo\'sh</div>';
+    total.style.display = 'none';
+    orderBtn.style.display = 'none';
+    return;
+  }
+
+  list.innerHTML = '';
+  let totalPrice = 0;
+
+  cart.forEach((item, i) => {
+    const price = parseInt(item.price.replace(/[^0-9]/g, ''));
+    totalPrice += price * item.quantity;
+
+    list.innerHTML += `
+      <div class="cart-item">
+        <div class="cart-item-name">${item.name} (${item.brand})</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="changeQty(${i}, -1)" style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">−</button>
+          <span>${item.quantity}</span>
+          <button onclick="changeQty(${i}, 1)" style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">+</button>
+        </div>
+        <div class="cart-item-price">${item.price}</div>
+        <button class="cart-remove" onclick="removeFromCart(${i})">✕</button>
+      </div>
+    `;
+  });
+
+  total.style.display = 'block';
+  total.textContent = 'Jami: ' + totalPrice.toLocaleString() + ' ₩';
+  orderBtn.style.display = 'block';
+}
+
+function changeQty(index, dir) {
+  cart[index].quantity += dir;
+  if (cart[index].quantity <= 0) {
+    cart.splice(index, 1);
+  }
+  updateCartCount();
+  renderCart();
+}
+
+function sendCartToSeller() {
+  if (cart.length === 0) return;
+
+  let message = 'Salom! Buyurtma bermoqchiman:\n\n';
+  cart.forEach(item => {
+    message += `• ${item.name} (${item.brand}) x${item.quantity} — ${item.price}\n`;
+  });
+
+  const total = cart.reduce((sum, item) => {
+    const price = parseInt(item.price.replace(/[^0-9]/g, ''));
+    return sum + price * item.quantity;
+  }, 0);
+
+  message += `\nJami: ${total.toLocaleString()} ₩`;
+
+  window.open(`https://t.me/sayf1n?text=${encodeURIComponent(message)}`);
+}
