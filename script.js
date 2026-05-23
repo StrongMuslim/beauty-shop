@@ -26,8 +26,7 @@ async function loadProducts() {
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
       price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
-      images: row.c[5]?.v ? row.c[5].v.split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
-      description: row.c[6]?.v || '',
+      images: row.c[5]?.v ? row.c[5].v.split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],      description: row.c[6]?.v || '',
       inStock: row.c[7]?.v === true || row.c[7]?.v === 'TRUE'
     }));
 
@@ -275,7 +274,7 @@ async function addProduct() {
           id: Date.now(),
           name, brand, category,
           price,
-          image: image || '',
+          image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
           description,
           inStock
         }]
