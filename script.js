@@ -21,7 +21,7 @@ async function loadProducts() {
     const categoriesJson = JSON.parse(categoriesText.substring(47).slice(0, -2));
 
     products = productsJson.table.rows.map(row => ({
-      id: row.c[0]?.v || Date.now(),
+      id: String(row.c[0]?.v || Date.now()),
       name: row.c[1]?.v || '',
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
