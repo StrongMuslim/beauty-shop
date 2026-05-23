@@ -1,7 +1,7 @@
 const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw78e2D9Myl4N0J0dk4KXFKTrd-lB2gaID7XIoB8R5UR6AChnMhH0YoSvN6iGc29pch7g/exec';
+const SHEETDB_URL = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
 let products = [];
 let categories = [{ id: 'barchasi', label: 'Barchasi' }];
 
@@ -176,12 +176,9 @@ function renderProductList() {
 async function deleteProduct(index) {
   if (confirm('Mahsulotni o\'chirasizmi?')) {
     try {
-      await fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'delete',
-          id: products[index].id
-        })
+      await fetch(SHEETDB_URL + '/id/' + products[index].id, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
       });
       await loadProducts();
       renderProductList();
@@ -230,16 +227,17 @@ async function saveEdit() {
   }
 
   try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
+    await fetch(SHEETDB_URL + '/id/' + products[editIndex].id, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'edit',
-        id: products[editIndex].id,
-        name, brand, category,
-        price,
-        images: image || products[editIndex].images.join(','),
-        description,
-        inStock
+        data: {
+          name, brand, category,
+          price,
+          image: image || products[editIndex].images[0],
+          description,
+          inStock
+        }
       })
     });
     await loadProducts();
@@ -269,20 +267,20 @@ async function addProduct() {
     return;
   }
 
-  const newProduct = {
-    action: 'add',
-    id: Date.now(),
-    name, brand, category,
-    price,
-    images: image || '',
-    description,
-    inStock
-  };
-
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    await fetch(SHEETDB_URL, {
       method: 'POST',
-      body: JSON.stringify(newProduct)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: [{
+          id: Date.now(),
+          name, brand, category,
+          price,
+          image: image || '',
+          description,
+          inStock
+        }]
+      })
     });
     await loadProducts();
     document.getElementById('newName').value = '';
