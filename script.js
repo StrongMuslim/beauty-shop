@@ -231,11 +231,13 @@ async function saveEdit() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         data: {
-          name, brand, category,
-          price,
-          images: image || products[editIndex].images[0],
-          description,
-          inStock
+          name: name,
+          brand: brand,
+          category: category,
+          price: price,
+          image: image || products[editIndex].images[0],
+          description: description,
+          inStock: String(inStock)
         }
       })
     });
