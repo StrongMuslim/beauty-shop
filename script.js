@@ -1,7 +1,7 @@
 const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzsxw5vbJzuupW7GvAFhEdduGFwfMUlP8FBrImPYB5SqBvHw6XlJoazT6ROi47JssyZBA/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw78e2D9Myl4N0J0dk4KXFKTrd-lB2gaID7XIoB8R5UR6AChnMhH0YoSvN6iGc29pch7g/exec';
 let products = [];
 let categories = [{ id: 'barchasi', label: 'Barchasi' }];
 
