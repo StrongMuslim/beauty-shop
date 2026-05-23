@@ -273,12 +273,14 @@ async function addProduct() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         data: [{
-          id: Date.now(),
-          name, brand, category,
-          price,
+          id: String(Date.now()),
+          name: name,
+          brand: brand,
+          category: category,
+          price: price,
           image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
-          description,
-          inStock
+          description: description,
+          inStock: String(inStock)
         }]
       })
     });
