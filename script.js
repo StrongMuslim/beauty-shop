@@ -179,6 +179,7 @@ async function deleteProduct(index) {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       });
+      await new Promise(resolve => setTimeout(resolve, 1500));
       await loadProducts();
       renderProductList();
     } catch (e) {
@@ -238,6 +239,7 @@ async function saveEdit() {
         }
       })
     });
+    await new Promise(resolve => setTimeout(resolve, 1500));
     await loadProducts();
     closeEdit();
     document.getElementById('adminModal').classList.add('open');
@@ -280,6 +282,7 @@ async function addProduct() {
         }]
       })
     });
+    await new Promise(resolve => setTimeout(resolve, 1500));
     await loadProducts();
     document.getElementById('newName').value = '';
     document.getElementById('newBrand').value = '';
