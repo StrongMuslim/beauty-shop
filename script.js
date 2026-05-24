@@ -26,8 +26,10 @@ async function loadProducts() {
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
       price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
-      images: row.c[5]?.v ? row.c[5].v.split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],      description: row.c[6]?.v || '',
-      inStock: row.c[7]?.v === true || row.c[7]?.v === 'TRUE'
+      price_uzs: row.c[5]?.v ? Number(row.c[5].v).toLocaleString('en-US') + ' so\'m' : '',
+      inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
+      images: row.c[7]?.v ? String(row.c[7].v).split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
+      description: row.c[8]?.v || ''
     }));
 
     const catRows = categoriesJson.table.rows.slice(1);
@@ -103,6 +105,7 @@ card.onclick = (e) => {
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
         <div class="price">${p.price}</div>
+        ${p.price_uzs ? `<div style="font-size:12px;color:#999;margin-top:2px">${p.price_uzs}</div>` : ''}
         <span class="badge ${p.inStock ? 'in-stock' : 'out-stock'}">
           ${p.inStock ? 'Mavjud' : 'Mavjud emas'}
         </span>
@@ -383,6 +386,9 @@ function openProduct(index) {
   document.getElementById('modalBrand').textContent = p.brand;
   document.getElementById('modalName').textContent = p.name;
   document.getElementById('modalPrice').textContent = p.price;
+  document.getElementById('modalPrice').insertAdjacentHTML('afterend', 
+    p.price_uzs ? `<div style="font-size:13px;color:#999;margin-top:2px">${p.price_uzs}</div>` : ''
+  );
   document.getElementById('modalDescription').textContent = p.description || '';
 
   const badge = document.getElementById('modalBadge');
