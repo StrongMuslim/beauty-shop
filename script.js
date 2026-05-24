@@ -113,7 +113,7 @@ card.onclick = (e) => {
         </button>
         <button class="order-btn"
           ${!p.inStock ? 'disabled' : ''}
-          onclick="window.open('https://t.me/sayf1n?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
+          onclick="window.open('https://t.me/eyf1nn?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
           Sotuvchiga yozish
         </button>
       </div>
@@ -393,7 +393,7 @@ function openProduct(index) {
   if (p.inStock) {
     orderBtn.disabled = false;
     orderBtn.style.background = '#222';
-    orderBtn.onclick = () => window.open(`https://t.me/sayf1n?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman`);
+    orderBtn.onclick = () => window.open(`https://t.me/eyf1nn?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman`);
   } else {
     orderBtn.disabled = true;
     orderBtn.style.background = '#ccc';
@@ -529,5 +529,5 @@ function sendCartToSeller() {
 
   message += `\nJami: ${total.toLocaleString()} ₩`;
 
-  window.open(`https://t.me/sayf1n?text=${encodeURIComponent(message)}`);
+  window.open(`https://t.me/eyf1nn?text=${encodeURIComponent(message)}`);
 }
