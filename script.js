@@ -18,6 +18,7 @@ async function loadProducts() {
     const categoriesText = await categoriesRes.text();
 
     const productsJson = JSON.parse(productsText.substring(47).slice(0, -2));
+    const kurs = productsJson.table.rows[0]?.c[9]?.v || 3.5;
     const categoriesJson = JSON.parse(categoriesText.substring(47).slice(0, -2));
 
     products = productsJson.table.rows.map(row => ({
@@ -26,7 +27,9 @@ async function loadProducts() {
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
       price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
-      price_uzs: row.c[5]?.v ? Number(row.c[5].v).toLocaleString('en-US') + ' so\'m' : '',
+      price_uzs: row.c[5]?.v 
+  ?     Number(row.c[5].v).toLocaleString('en-US') + ' so\'m'
+         : row.c[4]?.v ? Math.round(Number(row.c[4].v) * kurs).toLocaleString('en-US') + ' so\'m' : '',
       inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
       images: row.c[7]?.v ? String(row.c[7].v).split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
       description: row.c[8]?.v || ''
