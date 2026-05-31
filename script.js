@@ -103,7 +103,7 @@ card.onclick = (e) => {
   openProduct(products.indexOf(p));
 };
     card.innerHTML = `
-      <img src="${p.images[0]}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">
+<img src="${p.images[0].replace('/upload/', '/upload/f_auto,q_auto,w_400/')}"
       <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
@@ -367,7 +367,7 @@ function openProduct(index) {
 
   currentPhotos.forEach((src, i) => {
     const img = document.createElement('img');
-    img.src = src;
+    img.src = src.replace('/upload/', '/upload/f_auto,q_auto,w_1200/');
     img.className = i === 0 ? 'active' : '';
     img.onerror = () => img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?';
     slider.insertBefore(img, slider.querySelector('.slider-btn.prev').nextSibling);
@@ -387,13 +387,24 @@ function openProduct(index) {
 
   // Заполняем данные
   document.getElementById('modalBrand').textContent = p.brand;
-  document.getElementById('modalName').textContent = p.name;
-  document.getElementById('modalPrice').textContent = p.price;
-  document.getElementById('modalPrice').insertAdjacentHTML('afterend', 
-    p.price_uzs ? `<div style="font-size:13px;color:#999;margin-top:2px">${p.price_uzs}</div>` : ''
-  );
-  document.getElementById('modalDescription').textContent = p.description || '';
 
+  document.getElementById('modalName').textContent = p.name;
+
+  document.getElementById('modalPrice').textContent = p.price;
+
+  // удаляем старую цену в сумах если уже была
+  const oldUzs = document.getElementById('modalPriceUzs');
+  if (oldUzs) oldUzs.remove();
+
+  // добавляем новую
+  if (p.price_uzs) {
+    document.getElementById('modalPrice').insertAdjacentHTML(
+      'afterend',
+      `<div id="modalPriceUzs" style="font-size:13px;color:#999;margin-top:2px">${p.price_uzs}</div>`
+    );
+  }
+
+document.getElementById('modalDescription').textContent = p.description || '';
   const badge = document.getElementById('modalBadge');
   badge.textContent = p.inStock ? 'Mavjud' : 'Mavjud emas';
   badge.className = 'badge ' + (p.inStock ? 'in-stock' : 'out-stock');
