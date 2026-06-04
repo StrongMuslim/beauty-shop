@@ -8,6 +8,14 @@ function tgOpen(username, text) {
     window.open(url);
   }
 }
+// Cloudinary optimization: scale + auto format/quality.
+// Non-Cloudinary URLs are returned unchanged.
+function cldOpt(url, width) {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('/upload/')) return url;
+  if (url.includes('/upload/f_auto') || url.includes(',f_auto')) return url; // already optimized
+  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
+}
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
@@ -116,7 +124,7 @@ card.onclick = (e) => {
   openProduct(products.indexOf(p));
 };
     card.innerHTML = `
-<img loading="lazy" src="${p.images[0]}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">      <div class="card-body">
+<img loading="lazy" decoding="async" src="${cldOpt(p.images[0], 400)}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">      <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
         <div class="price">${p.price}</div>
@@ -379,7 +387,9 @@ function openProduct(index) {
 
   currentPhotos.forEach((src, i) => {
     const img = document.createElement('img');
-    img.src = src.replace('/upload/', '/upload/f_auto,q_auto,w_1200/');
+    img.src = cldOpt(src, 1000);
+    img.loading = i === 0 ? 'eager' : 'lazy';
+    img.decoding = 'async';
     img.className = i === 0 ? 'active' : '';
     img.onerror = () => img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?';
     slider.insertBefore(img, slider.querySelector('.slider-btn.prev').nextSibling);
