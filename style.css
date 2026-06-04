@@ -316,40 +316,50 @@ body {
 
 .slider-dots {
   position: absolute;
-  bottom: 10px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 6px;
+  gap: 8px;
+  z-index: 5;
 }
 
 .dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: rgba(255,255,255,0.5);
   cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,0.8);
+  transition: all 0.2s;
 }
 
 .dot.active {
   background: #fff;
+  width: 22px;
+  border-radius: 4px;
 }
 
 .slider-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.9);
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  font-size: 16px;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
   cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.slider-btn.prev { left: 10px; }
-.slider-btn.next { right: 10px; }
+.slider-btn.prev { left: 12px; }
+.slider-btn.next { right: 12px; }
 
 .product-modal-body {
   padding: 16px;

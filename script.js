@@ -422,6 +422,15 @@ document.getElementById('modalDescription').textContent = p.description || '';
     orderBtn.style.background = '#ccc';
   }
 
+  // Swipe support
+  const sliderEl = document.getElementById('productSlider');
+  let swipeStartX = 0;
+  sliderEl.ontouchstart = e => { swipeStartX = e.touches[0].clientX; };
+  sliderEl.ontouchend = e => {
+    const diff = swipeStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
+  };
+
   document.getElementById('productModal').classList.add('open');
 }
 
