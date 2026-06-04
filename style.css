@@ -80,6 +80,8 @@ body {
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
 }
 
 .card img {
@@ -91,6 +93,15 @@ body {
 
 .card-body {
   padding: 10px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* Кнопки всегда прижаты к низу карточки — не «съезжают» при разной длине названия */
+.card-actions {
+  margin-top: auto;
+  padding-top: 10px;
 }
 
 .brand {

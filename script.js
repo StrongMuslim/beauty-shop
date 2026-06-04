@@ -132,16 +132,18 @@ card.onclick = (e) => {
         <span class="badge ${p.inStock ? 'in-stock' : 'out-stock'}">
           ${p.inStock ? 'Mavjud' : 'Mavjud emas'}
         </span>
-        <button class="order-btn" style="background:#fff;color:#222;border:1px solid #222;margin-bottom:6px"
-             ${!p.inStock ? 'disabled style="background:#f5f5f5;color:#ccc;border-color:#ccc"' : ''}
-              onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-             Savatga qo'shish
-        </button>
-        <button class="order-btn"
-          ${!p.inStock ? 'disabled' : ''}
-          onclick="event.stopPropagation(); tgOpen('unitybeautykr', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
-          Sotuvchiga yozish
-        </button>
+        <div class="card-actions">
+          <button class="order-btn" style="background:#fff;color:#222;border:1px solid #222;margin-bottom:6px"
+               ${!p.inStock ? 'disabled style="background:#f5f5f5;color:#ccc;border-color:#ccc"' : ''}
+                onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
+               Savatga qo'shish
+          </button>
+          <button class="order-btn"
+            ${!p.inStock ? 'disabled' : ''}
+            onclick="event.stopPropagation(); tgOpen('unitybeautykr', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
+            Sotuvchiga yozish
+          </button>
+        </div>
       </div>
     `;
     grid.appendChild(card);
