@@ -1,4 +1,13 @@
 const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
+
+function tgOpen(username, text) {
+  const url = `https://t.me/${username}?text=${encodeURIComponent(text)}`;
+  if (window.Telegram?.WebApp?.openTelegramLink) {
+    Telegram.WebApp.openTelegramLink(url);
+  } else {
+    window.open(url);
+  }
+}
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
 const SHEETDB_URL = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
@@ -122,7 +131,7 @@ card.onclick = (e) => {
         </button>
         <button class="order-btn"
           ${!p.inStock ? 'disabled' : ''}
-          onclick="window.open('https://t.me/unitybeautykr?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
+          onclick="event.stopPropagation(); tgOpen('unitybeautykr', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
           Sotuvchiga yozish
         </button>
       </div>
@@ -416,7 +425,7 @@ document.getElementById('modalDescription').textContent = p.description || '';
   if (p.inStock) {
     orderBtn.disabled = false;
     orderBtn.style.background = '#222';
-    orderBtn.onclick = () => window.open(`https://t.me/unitybeautykr?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman`);
+    orderBtn.onclick = () => tgOpen('unitybeautykr', `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`);
   } else {
     orderBtn.disabled = true;
     orderBtn.style.background = '#ccc';
@@ -561,5 +570,5 @@ function sendCartToSeller() {
 
   message += `\nJami: ${total.toLocaleString()} ₩`;
 
-  window.open(`https://t.me/unitybeautykr?text=${encodeURIComponent(message)}`);
+  tgOpen('unitybeautykr', message);
 }
