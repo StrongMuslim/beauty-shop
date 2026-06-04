@@ -31,6 +31,7 @@ async function loadProducts() {
   ?     Number(row.c[5].v).toLocaleString('en-US') + ' so\'m'
          : row.c[4]?.v ? Math.round(Number(row.c[4].v) * kurs).toLocaleString('en-US') + ' so\'m' : '',
       inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
+      hidden: row.c[10]?.v === true || row.c[10]?.v === 'TRUE',
       images: row.c[7]?.v ? String(row.c[7].v).split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
       description: row.c[8]?.v || ''
     }));
@@ -77,8 +78,8 @@ function renderCategories() {
 
 function filterProducts() {
   const query = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = products.filter(p => {
-    const matchBrand = p.brand.toLowerCase().includes(query);
+ const filtered = products.filter(p => {
+    if (p.hidden) return false;    const matchBrand = p.brand.toLowerCase().includes(query);
     const matchCat = currentCategory === 'barchasi' || p.category === currentCategory;
     return matchBrand && matchCat;
   });
