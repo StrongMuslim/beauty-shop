@@ -32,7 +32,7 @@ async function loadProducts() {
          : row.c[4]?.v ? Math.round(Number(row.c[4].v) * kurs).toLocaleString('en-US') + ' so\'m' : '',
       inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
       hidden: row.c[10]?.v === true || row.c[10]?.v === 'TRUE',
-      images: row.c[7]?.v ? String(row.c[7].v).split('|').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
+      images: row.c[7]?.v ? String(row.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
       description: row.c[8]?.v || ''
     }));
 
