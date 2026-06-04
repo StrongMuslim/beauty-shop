@@ -103,8 +103,7 @@ card.onclick = (e) => {
   openProduct(products.indexOf(p));
 };
     card.innerHTML = `
-<img src="${p.images[0].replace('/upload/', '/upload/f_auto,q_auto,w_400/')}"
-      <div class="card-body">
+<img loading="lazy" src="${p.images[0]}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">      <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
         <div class="price">${p.price}</div>
