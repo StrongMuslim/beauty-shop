@@ -27,14 +27,17 @@ async function loadProducts() {
       brand: row.c[2]?.v || '',
       category: row.c[3]?.v || '',
       price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
-      price_uzs: row.c[5]?.v 
+      price_uzs: row.c[5]?.v
   ?     Number(row.c[5].v).toLocaleString('en-US') + ' so\'m'
          : row.c[4]?.v ? Math.round(Number(row.c[4].v) * kurs).toLocaleString('en-US') + ' so\'m' : '',
       inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
       hidden: row.c[10]?.v === true || row.c[10]?.v === 'TRUE',
-      images: row.c[7]?.v ? String(row.c[7].v).split(',').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
+      images: row.c[7]?.v ? String(row.c[7].v).split('|').map(s => s.trim()) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
       description: row.c[8]?.v || ''
     }));
+
+    // Sort by brand so same-brand products appear together
+    products.sort((a, b) => a.brand.localeCompare(b.brand));
 
     const catRows = categoriesJson.table.rows.slice(1);
 categories = [
@@ -119,7 +122,7 @@ card.onclick = (e) => {
         </button>
         <button class="order-btn"
           ${!p.inStock ? 'disabled' : ''}
-          onclick="window.open('https://t.me/eyf1n?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
+          onclick="window.open('https://t.me/unitybeautykr?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman')">
           Sotuvchiga yozish
         </button>
       </div>
@@ -387,8 +390,8 @@ function openProduct(index) {
 
   // Заполняем данные
   document.getElementById('modalBrand').textContent = p.brand;
-
   document.getElementById('modalName').textContent = p.name;
+  document.getElementById('modalId').textContent = '🆔 ' + p.id;
 
   document.getElementById('modalPrice').textContent = p.price;
 
@@ -413,7 +416,7 @@ document.getElementById('modalDescription').textContent = p.description || '';
   if (p.inStock) {
     orderBtn.disabled = false;
     orderBtn.style.background = '#222';
-    orderBtn.onclick = () => window.open(`https://t.me/eyf1n?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman`);
+    orderBtn.onclick = () => window.open(`https://t.me/unitybeautykr?text=Salom! ${encodeURIComponent(p.name)} (${p.brand}) buyurtma bermoqchiman`);
   } else {
     orderBtn.disabled = true;
     orderBtn.style.background = '#ccc';
@@ -549,5 +552,5 @@ function sendCartToSeller() {
 
   message += `\nJami: ${total.toLocaleString()} ₩`;
 
-  window.open(`https://t.me/eyf1n?text=${encodeURIComponent(message)}`);
+  window.open(`https://t.me/unitybeautykr?text=${encodeURIComponent(message)}`);
 }
