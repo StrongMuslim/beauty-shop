@@ -477,6 +477,14 @@ function slidePhoto(dir) {
 
 
 
+// Telegram Mini App init
+if (window.Telegram?.WebApp) {
+  try {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+  } catch (e) { console.warn('WebApp init:', e); }
+}
+
 // СТАРТ
 loadProducts();
 updateCategorySelect();
