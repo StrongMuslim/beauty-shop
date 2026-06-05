@@ -125,6 +125,7 @@ body {
 
 .badge {
   display: inline-block;
+  align-self: flex-start;
   font-size: 11px;
   padding: 2px 8px;
   border-radius: 20px;
