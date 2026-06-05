@@ -160,23 +160,6 @@ body {
   cursor: not-allowed;
 }
 
-/* АДМИНКА */
-.admin-btn {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #222;
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  font-size: 22px;
-  cursor: pointer;
-  z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
 .modal {
   display: none;
   position: fixed;
@@ -238,30 +221,6 @@ body {
   cursor: pointer;
   margin-top: 8px;
 }
-
-.product-list {
-  margin-top: 16px;
-}
-
-.product-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
-  font-size: 14px;
-}
-
-.product-item .del-btn {
-  background: #fee;
-  color: #c0392b;
-  border: none;
-  border-radius: 8px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
 
 /* Адаптивность */
 @media (min-width: 600px) {

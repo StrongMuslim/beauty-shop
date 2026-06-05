@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kosmetika do'koni</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
-  <div class="header" id="headerLogo" onclick="handleAdminTap()">Unity Beauty 🦋</div>
+  <div class="header">Unity Beauty 🦋</div>
 
   <div class="search">
     <input type="text" id="searchInput" placeholder="Brend bo'yicha qidirish..." oninput="filterProducts()">
@@ -23,40 +23,6 @@
     🛒
     <span class="cart-count" id="cartCount" style="display:none">0</span>
   </button>
-
-
-  <!-- АДМИНКА -->
-  <div class="modal" id="adminModal">
-    <div class="modal-box">
-      <h2>Boshqaruv paneli</h2>
-
-      <!-- Добавить товар -->
-      <p style="font-size:13px;color:#999;margin-bottom:8px">Yangi mahsulot qo'shish</p>
-      <input type="text" id="newName" placeholder="Nomi" autocomplete="off">
-      <input type="text" id="newBrand" placeholder="Brend" autocomplete="off">
-      <input type="text" id="newPrice" placeholder="Narx (masalan: 25,000 ₩)" autocomplete="off">
-      <input type="text" id="newImage" placeholder="Rasm havolasi (URL)" autocomplete="off">
-      <input type="text" id="newDescription" placeholder="Tavsif (ixtiyoriy)" autocomplete="off">
-      <select id="newCategory"></select>
-      <select id="newStock">
-        <option value="true">Mavjud</option>
-        <option value="false">Mavjud emas</option>
-      </select>
-      <button class="save-btn" onclick="addProduct()">Qo'shish</button>
-
-      <!-- Список товаров -->
-      <p style="font-size:13px;color:#999;margin:16px 0 8px">Mahsulotlar</p>
-      <div class="product-list" id="productList"></div>
-
-      <!-- Категории -->
-      <p style="font-size:13px;color:#999;margin:16px 0 8px">Kategoriyalar</p>
-      <input type="text" id="newCatLabel" placeholder="Yangi kategoriya nomi">
-      <button class="save-btn" onclick="addCategory()">Kategoriya qo'shish</button>
-      <div class="product-list" id="categoryList"></div>
-
-      <button class="close-btn" onclick="closeAdmin()">Yopish</button>
-    </div>
-  </div>
 
 
   <!-- Модальное окно товара -->
@@ -81,26 +47,6 @@
   </div>
 </div>
 
-<!-- Модальное окно редактирования -->
-<div class="modal" id="editModal">
-  <div class="modal-box">
-    <h2>Mahsulotni tahrirlash</h2>
-    <input type="text" id="editName" placeholder="Nomi" autocomplete="off">
-    <input type="text" id="editBrand" placeholder="Brend" autocomplete="off">
-    <input type="text" id="editPrice" placeholder="Narx (raqam)" autocomplete="off">
-    <input type="text" id="editImage" placeholder="Rasm URL" autocomplete="off">
-    <input type="text" id="editDescription" placeholder="Tavsif" autocomplete="off">
-    <select id="editCategory"></select>
-    <select id="editStock">
-      <option value="true">Mavjud</option>
-      <option value="false">Mavjud emas</option>
-    </select>
-    <button class="save-btn" onclick="saveEdit()">Saqlash</button>
-    <button class="close-btn" onclick="closeEdit()">Bekor qilish</button>
-  </div>
-</div>
-
-
 <!-- Корзина -->
 <div class="modal" id="cartModal">
   <div class="modal-box">
@@ -119,7 +65,7 @@
     Sayt muallifi: <a href="https://t.me/eyf1n" style="color:#bbb;text-decoration:none">@eyf1n</a>
   </footer>
 
-  <script src="script.js?v=5"></script>
+  <script src="script.js?v=6"></script>
 
 </body>
 </html>

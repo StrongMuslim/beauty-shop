@@ -2,7 +2,6 @@
 const SHEET_ID  = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
-const SHEETDB   = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
 const SELLER    = 'unitybeautykr'; // username to open when "Sotuvchiga yozish"
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -98,15 +97,6 @@ function renderCategories() {
     el.appendChild(btn);
   });
 
-  // Keep category dropdowns in admin up to date
-  ['newCategory', 'editCategory'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (!sel) return;
-    const prev = sel.value;
-    sel.innerHTML = categories.slice(1)
-      .map(c => `<option value="${c.id}" ${c.id === prev ? 'selected' : ''}>${c.label}</option>`)
-      .join('');
-  });
 }
 
 // ─── Product grid ─────────────────────────────────────────────────────────────
@@ -355,134 +345,6 @@ function sendCartToSeller() {
     + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}`).join('\n')
     + `\n\nJami: ${total.toLocaleString('en-US')} ₩`;
   tgOpen(SELLER, msg);
-}
-
-// ─── Admin (site panel) ───────────────────────────────────────────────────────
-let tapCount = 0, tapTimer = null;
-function handleAdminTap() {
-  tapCount++;
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
-  if (tapCount >= 5) { tapCount = 0; openAdmin(); }
-}
-
-function openAdmin() {
-  const pw = prompt('Parol:');
-  if (pw !== '1234') { alert("Noto'g'ri parol"); return; }
-  renderProductList();
-  renderCategoryList();
-  document.getElementById('adminModal').classList.add('open');
-}
-function closeAdmin() { document.getElementById('adminModal').classList.remove('open'); }
-
-function renderProductList() {
-  document.getElementById('productList').innerHTML = products.map((p, i) => `
-    <div class="product-item">
-      <span style="font-size:12px">🆔 ${p.id} — <b>${p.brand}</b> ${p.name}</span>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="del-btn" style="background:#e8f0fe;color:#1a56db" onclick="editProduct(${i})">✏️</button>
-        <button class="del-btn" onclick="deleteProduct(${i})">🗑</button>
-      </div>
-    </div>`).join('');
-}
-
-let editIndex = -1;
-function editProduct(i) {
-  editIndex = i;
-  const p = products[i];
-  document.getElementById('editName').value        = p.name;
-  document.getElementById('editBrand').value       = p.brand;
-  document.getElementById('editPrice').value       = p.priceRaw || '';
-  document.getElementById('editImage').value       = p.images[0] || '';
-  document.getElementById('editDescription').value = p.description;
-  document.getElementById('editStock').value       = p.inStock ? 'true' : 'false';
-
-  const sel = document.getElementById('editCategory');
-  sel.innerHTML = categories.slice(1)
-    .map(c => `<option value="${c.id}" ${c.id === p.category ? 'selected' : ''}>${c.label}</option>`)
-    .join('');
-
-  document.getElementById('adminModal').classList.remove('open');
-  document.getElementById('editModal').classList.add('open');
-}
-
-async function saveEdit() {
-  const name    = document.getElementById('editName').value.trim();
-  const brand   = document.getElementById('editBrand').value.trim();
-  const price   = document.getElementById('editPrice').value.trim();
-  const image   = document.getElementById('editImage').value.trim();
-  const desc    = document.getElementById('editDescription').value.trim();
-  const cat     = document.getElementById('editCategory').value;
-  const inStock = document.getElementById('editStock').value === 'true';
-  if (!name || !brand || !price) return alert('Nomi, brend va narxni kiriting');
-  try {
-    await fetch(`${SHEETDB}/id/${products[editIndex].id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: {
-        'name ': name, brand, category: cat, price,
-        image: image || products[editIndex].images[0] || '',
-        description: desc,
-        inStock: String(inStock)
-      }})
-    });
-    await loadProducts();
-    closeEdit();
-    document.getElementById('adminModal').classList.add('open');
-    renderProductList();
-  } catch { alert('Xato yuz berdi'); }
-}
-function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
-
-async function addProduct() {
-  const name    = document.getElementById('newName').value.trim();
-  const brand   = document.getElementById('newBrand').value.trim();
-  const cat     = document.getElementById('newCategory').value;
-  const price   = document.getElementById('newPrice').value.trim();
-  const image   = document.getElementById('newImage').value.trim();
-  const desc    = document.getElementById('newDescription').value.trim();
-  const inStock = document.getElementById('newStock').value === 'true';
-  if (!name || !brand || !price) return alert('Nomi, brend va narxni kiriting');
-  try {
-    await fetch(SHEETDB, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: [{
-        id: String(Date.now()), 'name ': name, brand, category: cat,
-        price, image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
-        description: desc, inStock: String(inStock)
-      }]})
-    });
-    await loadProducts();
-    ['newName','newBrand','newPrice','newImage','newDescription']
-      .forEach(id => { document.getElementById(id).value = ''; });
-    renderProductList();
-    alert("Mahsulot qo'shildi!");
-  } catch { alert('Xato yuz berdi'); }
-}
-
-async function deleteProduct(i) {
-  if (!confirm("Mahsulotni o'chirasizmi?")) return;
-  try {
-    await fetch(`${SHEETDB}/id/${products[i].id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    await loadProducts();
-    renderProductList();
-  } catch { alert('Xato yuz berdi'); }
-}
-
-function renderCategoryList() {
-  const list = document.getElementById('categoryList');
-  list.innerHTML = categories.slice(1).map(c =>
-    `<div class="product-item"><span>${c.label}</span></div>`
-  ).join('') || '<div style="color:#999;font-size:13px;padding:8px 0">—</div>';
-}
-
-// Categories are managed via the Telegram bot (not editable here)
-function addCategory() {
-  alert("Kategoriyalarni Telegram bot orqali boshqaring (📁 Kategoriyalar).");
 }
 
 // ─── Start ────────────────────────────────────────────────────────────────────
