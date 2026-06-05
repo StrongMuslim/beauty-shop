@@ -165,7 +165,7 @@ function renderProducts(list) {
     });
     card.querySelector('.js-seller').addEventListener('click', e => {
       e.stopPropagation();
-      tgOpen(SELLER, `Salom! ${p.name} (${p.brand}) — ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''} buyurtma bermoqchiman`);
+      tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
     });
     card.addEventListener('click', () => openProduct(p));
 
@@ -244,7 +244,7 @@ function openProduct(p) {
 
   if (p.inStock) {
     cartBtn.addEventListener('click',  () => addToCart(p));
-    orderBtn.addEventListener('click', () => tgOpen(SELLER, `Salom! ${p.name} (${p.brand}) — ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''} buyurtma bermoqchiman`));
+    orderBtn.addEventListener('click', () => tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`));
   }
 
   document.getElementById('productModal').classList.add('open');
