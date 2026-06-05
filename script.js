@@ -65,7 +65,10 @@ async function loadProducts() {
       };
     });
 
-    products.sort((a, b) => a.brand.localeCompare(b.brand));
+    products.sort((a, b) => {
+      if (a.inStock !== b.inStock) return a.inStock ? -1 : 1; // mavjud — yuqorida
+      return a.brand.localeCompare(b.brand);
+    });
 
     categories = [
       { id: 'barchasi', label: 'Barchasi' },
