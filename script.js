@@ -1,426 +1,216 @@
-const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
+// ─── Config ───────────────────────────────────────────────────────────────────
+const SHEET_ID  = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
+const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
+const CAT_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
+const SHEETDB   = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
+const SELLER    = 'eyf1n'; // username to open when "Sotuvchiga yozish"
 
+// ─── State ────────────────────────────────────────────────────────────────────
+let products        = [];
+let categories      = [{ id: 'barchasi', label: 'Barchasi' }];
+let currentCategory = 'barchasi';
+let cart            = [];
+let currentSlide    = 0;
+let currentPhotos   = [];
+
+// ─── Telegram Mini App init ───────────────────────────────────────────────────
+if (window.Telegram?.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+// Open Telegram chat. Inside Mini App: just open the chat (no prefill).
+// In browser: open with prefilled text.
 function tgOpen(username, text) {
-  const url = `https://t.me/${username}?text=${encodeURIComponent(text)}`;
   if (window.Telegram?.WebApp?.openTelegramLink) {
-    Telegram.WebApp.openTelegramLink(url);
+    Telegram.WebApp.openTelegramLink(`https://t.me/${username}`);
   } else {
-    window.open(url);
+    window.open(`https://t.me/${username}?text=${encodeURIComponent(text)}`);
   }
 }
-// Cloudinary optimization: scale + auto format/quality.
-// Non-Cloudinary URLs are returned unchanged.
-function cldOpt(url, width) {
-  if (!url || typeof url !== 'string') return url;
-  if (!url.includes('/upload/')) return url;
-  if (url.includes('/upload/f_auto') || url.includes(',f_auto')) return url; // already optimized
-  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
+
+// Inject Cloudinary resize/optimize transforms. Non-Cloudinary URLs pass through.
+function cldOpt(url, w) {
+  if (!url || !url.includes('/upload/') || url.includes('f_auto')) return url;
+  return url.replace('/upload/', `/upload/f_auto,q_auto,w_${w}/`);
 }
-const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
-const CAT_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
-const SHEETDB_URL = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
-let products = [];
-let categories = [{ id: 'barchasi', label: 'Barchasi' }];
 
-let currentCategory = 'barchasi';
-
+// ─── Load data from Google Sheets ────────────────────────────────────────────
 async function loadProducts() {
   try {
-    const [productsRes, categoriesRes] = await Promise.all([
-      fetch(SHEET_URL),
-      fetch(CAT_URL)
-    ]);
+    const [pRes, cRes] = await Promise.all([fetch(SHEET_URL), fetch(CAT_URL)]);
+    const pJson = JSON.parse((await pRes.text()).slice(47, -2));
+    const cJson = JSON.parse((await cRes.text()).slice(47, -2));
+    const kurs  = pJson.table.rows[0]?.c[9]?.v || 3.5;
 
-    const productsText = await productsRes.text();
-    const categoriesText = await categoriesRes.text();
+    products = pJson.table.rows.map(r => {
+      const price    = r.c[4]?.v ? Number(r.c[4].v) : 0;
+      const uzs      = r.c[5]?.v ? Number(r.c[5].v) : (price ? Math.round(price * kurs) : 0);
+      return {
+        id:          String(r.c[0]?.v || ''),
+        name:        r.c[1]?.v || '',
+        brand:       r.c[2]?.v || '',
+        category:    r.c[3]?.v || '',
+        price:       price ? price.toLocaleString('en-US') + ' ₩' : '',
+        priceRaw:    price,
+        price_uzs:   uzs  ? uzs.toLocaleString('en-US') + " so'm" : '',
+        inStock:     r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE',
+        images:      r.c[7]?.v
+          ? String(r.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean)
+          : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
+        description: r.c[8]?.v || '',
+        hidden:      r.c[10]?.v === true || String(r.c[10]?.v).toUpperCase() === 'TRUE',
+      };
+    });
 
-    const productsJson = JSON.parse(productsText.substring(47).slice(0, -2));
-    const kurs = productsJson.table.rows[0]?.c[9]?.v || 3.5;
-    const categoriesJson = JSON.parse(categoriesText.substring(47).slice(0, -2));
-
-    products = productsJson.table.rows.map(row => ({
-      id: String(row.c[0]?.v || Date.now()),
-      name: row.c[1]?.v || '',
-      brand: row.c[2]?.v || '',
-      category: row.c[3]?.v || '',
-      price: row.c[4]?.v ? Number(row.c[4].v).toLocaleString('en-US') + ' ₩' : '',
-      price_uzs: row.c[5]?.v
-  ?     Number(row.c[5].v).toLocaleString('en-US') + ' so\'m'
-         : row.c[4]?.v ? Math.round(Number(row.c[4].v) * kurs).toLocaleString('en-US') + ' so\'m' : '',
-      inStock: row.c[6]?.v === true || row.c[6]?.v === 'TRUE',
-      hidden: row.c[10]?.v === true || row.c[10]?.v === 'TRUE',
-      images: row.c[7]?.v ? String(row.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean) : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
-      description: row.c[8]?.v || ''
-    }));
-
-    // Sort by brand so same-brand products appear together
     products.sort((a, b) => a.brand.localeCompare(b.brand));
 
-    const catRows = categoriesJson.table.rows.slice(1);
-categories = [
-  { id: 'barchasi', label: 'Barchasi' },
-  ...catRows
-    .filter(row => row.c[0]?.v && row.c[1]?.v)
-    .map(row => ({
-      id: row.c[0].v,
-      label: row.c[1].v
-    }))
-];
+    categories = [
+      { id: 'barchasi', label: 'Barchasi' },
+      ...cJson.table.rows.slice(1)
+        .filter(r => r.c[0]?.v && r.c[1]?.v)
+        .map(r => ({ id: String(r.c[0].v), label: String(r.c[1].v) }))
+    ];
 
     renderCategories();
     filterProducts();
-    updateCategorySelect();
   } catch (e) {
-    console.error('Xato:', e);
+    console.error('loadProducts error:', e);
   }
 }
 
-function saveData() {
-  localStorage.setItem('products', JSON.stringify(products));
-  localStorage.setItem('categories', JSON.stringify(categories));
-}
-
+// ─── Categories ───────────────────────────────────────────────────────────────
 function renderCategories() {
-  const container = document.getElementById('categories');
-  container.innerHTML = '';
+  const el = document.getElementById('categories');
+  el.innerHTML = '';
   categories.forEach(cat => {
     const btn = document.createElement('button');
-    btn.className = 'cat-btn' + (cat.id === currentCategory ? ' active' : '');
+    btn.className   = 'cat-btn' + (cat.id === currentCategory ? ' active' : '');
     btn.textContent = cat.label;
-    btn.onclick = () => {
+    btn.addEventListener('click', () => {
       currentCategory = cat.id;
       renderCategories();
       filterProducts();
-    };
-    container.appendChild(btn);
+    });
+    el.appendChild(btn);
+  });
+
+  // Keep category dropdowns in admin up to date
+  ['newCategory', 'editCategory'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const prev = sel.value;
+    sel.innerHTML = categories.slice(1)
+      .map(c => `<option value="${c.id}" ${c.id === prev ? 'selected' : ''}>${c.label}</option>`)
+      .join('');
   });
 }
 
+// ─── Product grid ─────────────────────────────────────────────────────────────
 function filterProducts() {
-  const query = document.getElementById('searchInput').value.toLowerCase();
- const filtered = products.filter(p => {
-    if (p.hidden) return false;    const matchBrand = p.brand.toLowerCase().includes(query);
-    const matchCat = currentCategory === 'barchasi' || p.category === currentCategory;
-    return matchBrand && matchCat;
-  });
-  renderProducts(filtered);
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  renderProducts(
+    products.filter(p =>
+      !p.hidden &&
+      p.brand.toLowerCase().includes(q) &&
+      (currentCategory === 'barchasi' || p.category === currentCategory)
+    )
+  );
 }
 
 function renderProducts(list) {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
 
-  if (list.length === 0) {
+  if (!list.length) {
     grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#999;padding:40px 0">Mahsulot topilmadi</p>';
     return;
   }
 
   list.forEach(p => {
     const card = document.createElement('div');
-    card.className = 'card';
+    card.className   = 'card';
     card.style.cursor = 'pointer';
-card.onclick = (e) => {
-  if (e.target.classList.contains('order-btn')) return;
-  openProduct(products.indexOf(p));
-};
+
+    const off = !p.inStock;
     card.innerHTML = `
-<img loading="lazy" decoding="async" src="${cldOpt(p.images[0], 400)}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">      <div class="card-body">
+      <img loading="lazy" decoding="async"
+           src="${cldOpt(p.images[0], 400)}" alt="${p.name}"
+           onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">
+      <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
         <div class="price">${p.price}</div>
         ${p.price_uzs ? `<div style="font-size:12px;color:#999;margin-top:2px">${p.price_uzs}</div>` : ''}
-        <span class="badge ${p.inStock ? 'in-stock' : 'out-stock'}">
-          ${p.inStock ? 'Mavjud' : 'Mavjud emas'}
-        </span>
+        <span class="badge ${off ? 'out-stock' : 'in-stock'}">${off ? 'Mavjud emas' : 'Mavjud'}</span>
         <div class="card-actions">
-          <button class="order-btn" style="background:#fff;color:#222;border:1px solid #222;margin-bottom:6px"
-               ${!p.inStock ? 'disabled style="background:#f5f5f5;color:#ccc;border-color:#ccc"' : ''}
-                onclick="event.stopPropagation(); addToCart(${JSON.stringify(p).replace(/"/g, '&quot;')})">
-               Savatga qo'shish
+          <button class="order-btn js-cart" ${off ? 'disabled' : ''}
+            style="${off ? 'background:#f5f5f5;color:#ccc;border:1px solid #eee' : 'background:#fff;color:#222;border:1px solid #222'};margin-bottom:6px">
+            Savatga qo'shish
           </button>
-          <button class="order-btn"
-            ${!p.inStock ? 'disabled' : ''}
-            onclick="event.stopPropagation(); tgOpen('eyf1n', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
+          <button class="order-btn js-seller" ${off ? 'disabled' : ''}>
             Sotuvchiga yozish
           </button>
         </div>
-      </div>
-    `;
+      </div>`;
+
+    // Use event listeners (not inline onclick) — safe for names with quotes/special chars
+    card.querySelector('.js-cart').addEventListener('click', e => {
+      e.stopPropagation();
+      if (!p.inStock) return;
+      addToCart(p);
+    });
+    card.querySelector('.js-seller').addEventListener('click', e => {
+      e.stopPropagation();
+      tgOpen(SELLER, `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`);
+    });
+    card.addEventListener('click', () => openProduct(p));
+
     grid.appendChild(card);
   });
 }
 
-// АДМИНКА
-let tapCount = 0;
-let tapTimer = null;
+// ─── Product modal ────────────────────────────────────────────────────────────
+function openProduct(p) {
+  if (!p) return;
+  currentSlide  = 0;
+  currentPhotos = p.images.length ? p.images : ['https://placehold.co/300x300/f0f0f0/999?text=?'];
 
-function handleAdminTap() {
-  tapCount++;
-  clearTimeout(tapTimer);
-  tapTimer = setTimeout(() => {
-    tapCount = 0;
-  }, 2000);
-
-  if (tapCount >= 5) {
-    tapCount = 0;
-    openAdmin();
-  }
-}
-
-
-function openAdmin() {
-  const password = prompt('Parol:');
-  if (password !== '1234') {
-    alert('Noto\'g\'ri parol');
-    return;
-  }
-  renderProductList();
-  renderCategoryList();
-  document.getElementById('adminModal').classList.add('open');
-}
-
-function closeAdmin() {
-  document.getElementById('adminModal').classList.remove('open');
-}
-
-function renderProductList() {
-  const list = document.getElementById('productList');
-  list.innerHTML = '';
-  products.forEach((p, i) => {
-    const item = document.createElement('div');
-    item.className = 'product-item';
-    item.innerHTML = `
-      <span>${p.name} — ${p.price}</span>
-      <div style="display:flex;gap:6px">
-        <button class="del-btn" style="background:#e8f0fe;color:#1a56db" onclick="editProduct(${i})">Tahrirlash</button>
-        <button class="del-btn" onclick="deleteProduct(${i})">O'chirish</button>
-      </div>
-    `;
-    list.appendChild(item);
-  });
-}
-
-async function deleteProduct(index) {
-  if (confirm('Mahsulotni o\'chirasizmi?')) {
-    try {
-      await fetch(SHEETDB_URL + '/id/' + products[index].id, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      await loadProducts();
-      renderProductList();
-    } catch (e) {
-      alert('Xato yuz berdi');
-      console.error(e);
-    }
-  }
-}
-
-let editIndex = -1;
-
-function editProduct(index) {
-  editIndex = index;
-  const p = products[index];
-
-  document.getElementById('editName').value = p.name;
-  document.getElementById('editBrand').value = p.brand;
-  document.getElementById('editPrice').value = p.price.replace(' ₩', '');
-  document.getElementById('editImage').value = p.images?.[0] || '';  document.getElementById('editDescription').value = p.description || '';
-  document.getElementById('editStock').value = p.inStock ? 'true' : 'false';
-
-  const select = document.getElementById('editCategory');
-  select.innerHTML = '';
-  categories.slice(1).forEach(cat => {
-    select.innerHTML += `<option value="${cat.id}" ${cat.id === p.category ? 'selected' : ''}>${cat.label}</option>`;
-  });
-
-  document.getElementById('adminModal').classList.remove('open');
-  document.getElementById('editModal').classList.add('open');
-}
-
-async function saveEdit() {
-  const name = document.getElementById('editName').value.trim();
-  const brand = document.getElementById('editBrand').value.trim();
-  const price = document.getElementById('editPrice').value.trim();
-  const image = document.getElementById('editImage').value.trim();
-  const description = document.getElementById('editDescription').value.trim();
-  const category = document.getElementById('editCategory').value;
-  const inStock = document.getElementById('editStock').value === 'true';
-
-  if (!name || !brand || !price) {
-    alert('Nomi, brend va narxni kiriting');
-    return;
-  }
-
-  try {
-    await fetch(SHEETDB_URL + '/id/' + products[editIndex].id, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: {
-          "name": name,
-          "brand": brand,
-          "category": category,
-          "price": price,
-          "image": image || products[editIndex].images[0],
-          "description": description,
-          "inStock": String(inStock)
-        }
-      })
-    });
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    await loadProducts();
-    closeEdit();
-    document.getElementById('adminModal').classList.add('open');
-  } catch (e) {
-    alert('Xato yuz berdi');
-    console.error(e);
-  }
-}
-
-function closeEdit() {
-  document.getElementById('editModal').classList.remove('open');
-}
-
-async function addProduct() {
-  const name = document.getElementById('newName').value.trim();
-  const brand = document.getElementById('newBrand').value.trim();
-  const category = document.getElementById('newCategory').value;
-  const price = document.getElementById('newPrice').value.trim();
-  const image = document.getElementById('newImage').value.trim();
-  const description = document.getElementById('newDescription').value.trim();
-  const inStock = document.getElementById('newStock').value === 'true';
-
-  if (!name || !brand || !price) {
-    alert('Nomi, brend va narxni kiriting');
-    return;
-  }
-
-  try {
-    await fetch(SHEETDB_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        data: [{
-          id: String(Date.now()),
-          name: name,
-          brand: brand,
-          category: category,
-          price: price,
-          image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
-          description: description,
-          inStock: String(inStock)
-        }]
-      })
-    });
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    await loadProducts();
-    document.getElementById('newName').value = '';
-    document.getElementById('newBrand').value = '';
-    document.getElementById('newPrice').value = '';
-    document.getElementById('newImage').value = '';
-    document.getElementById('newDescription').value = '';
-    alert('Mahsulot qo\'shildi!');
-  } catch (e) {
-    alert('Xato yuz berdi');
-    console.error(e);
-  }
-}
-
-function renderCategoryList() {
-  const list = document.getElementById('categoryList');
-  list.innerHTML = '';
-  categories.slice(1).forEach((cat, i) => {
-    const item = document.createElement('div');
-    item.className = 'product-item';
-    item.innerHTML = `
-      <span>${cat.label}</span>
-      <button class="del-btn" onclick="deleteCategory(${i + 1})">O'chirish</button>
-    `;
-    list.appendChild(item);
-  });
-}
-
-function addCategory() {
-  const label = document.getElementById('newCatLabel').value.trim();
-  if (!label) return;
-  const id = label.toLowerCase().replace(/\s+/g, '_');
-  categories.push({ id, label });
-  saveData();
-  renderCategories();
-  renderCategoryList();
-  updateCategorySelect();
-  document.getElementById('newCatLabel').value = '';
-}
-
-function deleteCategory(index) {
-  categories.splice(index, 1);
-  saveData();
-  renderCategories();
-  renderCategoryList();
-  updateCategorySelect();
-}
-
-function updateCategorySelect() {
-  const select = document.getElementById('newCategory');
-  select.innerHTML = '';
-  categories.slice(1).forEach(cat => {
-    select.innerHTML += `<option value="${cat.id}">${cat.label}</option>`;
-  });
-}
-
-
-
-let currentSlide = 0;
-let currentPhotos = [];
-
-function openProduct(index) {
-  const p = products[index];
-  currentSlide = 0;
-  currentPhotos = p.images || ['https://placehold.co/300x300/f0f0f0/999?text=?'];
-  // Фото слайдер
+  // Build slider
   const slider = document.getElementById('productSlider');
-  const dots = document.getElementById('sliderDots');
-  
-  // Удаляем старые фото
+  const dots   = document.getElementById('sliderDots');
   slider.querySelectorAll('img').forEach(img => img.remove());
   dots.innerHTML = '';
 
   currentPhotos.forEach((src, i) => {
-    const img = document.createElement('img');
-    img.src = cldOpt(src, 1000);
-    img.loading = i === 0 ? 'eager' : 'lazy';
-    img.decoding = 'async';
+    const img     = document.createElement('img');
+    img.src       = cldOpt(src, 900);
+    img.loading   = i === 0 ? 'eager' : 'lazy';
     img.className = i === 0 ? 'active' : '';
-    img.onerror = () => img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?';
+    img.onerror   = () => { img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?'; };
     slider.insertBefore(img, slider.querySelector('.slider-btn.prev').nextSibling);
 
     const dot = document.createElement('div');
     dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => goToSlide(i);
+    dot.addEventListener('click', () => goToSlide(i));
     dots.appendChild(dot);
   });
 
-  // Скрываем кнопки если фото одно
-  const prevBtn = slider.querySelector('.prev');
-  const nextBtn = slider.querySelector('.next');
-  prevBtn.style.display = currentPhotos.length > 1 ? 'block' : 'none';
-  nextBtn.style.display = currentPhotos.length > 1 ? 'block' : 'none';
-  dots.style.display = currentPhotos.length > 1 ? 'flex' : 'none';
+  const multi = currentPhotos.length > 1;
+  slider.querySelector('.prev').style.display = multi ? 'flex' : 'none';
+  slider.querySelector('.next').style.display = multi ? 'flex' : 'none';
+  dots.style.display = multi ? 'flex' : 'none';
 
-  // Заполняем данные
+  // Fill info
   document.getElementById('modalBrand').textContent = p.brand;
-  document.getElementById('modalName').textContent = p.name;
-  document.getElementById('modalId').textContent = '🆔 ' + p.id;
-
+  document.getElementById('modalName').textContent  = p.name;
+  document.getElementById('modalId').textContent    = p.id ? '🆔 ' + p.id : '';
   document.getElementById('modalPrice').textContent = p.price;
 
-  // удаляем старую цену в сумах если уже была
   const oldUzs = document.getElementById('modalPriceUzs');
   if (oldUzs) oldUzs.remove();
-
-  // добавляем новую
   if (p.price_uzs) {
     document.getElementById('modalPrice').insertAdjacentHTML(
       'afterend',
@@ -428,31 +218,33 @@ function openProduct(index) {
     );
   }
 
-document.getElementById('modalDescription').textContent = p.description || '';
+  document.getElementById('modalDescription').textContent = p.description || '';
+
   const badge = document.getElementById('modalBadge');
   badge.textContent = p.inStock ? 'Mavjud' : 'Mavjud emas';
-  badge.className = 'badge ' + (p.inStock ? 'in-stock' : 'out-stock');
+  badge.className   = 'badge ' + (p.inStock ? 'in-stock' : 'out-stock');
 
-  const orderBtn = document.getElementById('modalOrderBtn');
+  // Replace buttons to clear old event listeners cleanly
+  const cartOld  = document.getElementById('modalCartBtn');
+  const orderOld = document.getElementById('modalOrderBtn');
+  const cartBtn  = cartOld.cloneNode(true);
+  const orderBtn = orderOld.cloneNode(true);
+  cartOld.replaceWith(cartBtn);
+  orderOld.replaceWith(orderBtn);
+
+  cartBtn.disabled  = !p.inStock;
+  orderBtn.disabled = !p.inStock;
+
+  // Outlined style for cart button, depends on stock
+  cartBtn.style.cssText = p.inStock
+    ? 'background:#fff;color:#222;border:1px solid #222;margin-bottom:8px'
+    : 'background:#f5f5f5;color:#bbb;border:1px solid #eee;margin-bottom:8px;cursor:not-allowed';
+  orderBtn.style.background = p.inStock ? '' : '#ccc';
+
   if (p.inStock) {
-    orderBtn.disabled = false;
-    orderBtn.style.background = '#222';
-    orderBtn.onclick = () => tgOpen('eyf1n', `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`);
-  } else {
-    orderBtn.disabled = true;
-    orderBtn.style.background = '#ccc';
+    cartBtn.addEventListener('click',  () => addToCart(p));
+    orderBtn.addEventListener('click', () => tgOpen(SELLER, `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`));
   }
-
-  const cartBtn = document.getElementById('modalCartBtn');
-  if (cartBtn) {
-    cartBtn.disabled = !p.inStock;
-    cartBtn.style.opacity = p.inStock ? '1' : '0.5';
-    cartBtn.onclick = () => {
-      if (!p.inStock) return;
-      addToCart(p);
-    };
-  }
-
 
   document.getElementById('productModal').classList.add('open');
 }
@@ -461,154 +253,236 @@ function closeProduct() {
   document.getElementById('productModal').classList.remove('open');
 }
 
-function goToSlide(index) {
+function goToSlide(i) {
   const imgs = document.getElementById('productSlider').querySelectorAll('img');
   const dots = document.getElementById('sliderDots').querySelectorAll('.dot');
-  imgs[currentSlide].classList.remove('active');
-  dots[currentSlide].classList.remove('active');
-  currentSlide = index;
-  imgs[currentSlide].classList.add('active');
-  dots[currentSlide].classList.add('active');
+  if (!imgs[i]) return;
+  imgs[currentSlide]?.classList.remove('active');
+  dots[currentSlide]?.classList.remove('active');
+  currentSlide = i;
+  imgs[i].classList.add('active');
+  dots[i].classList.add('active');
 }
 
 function slidePhoto(dir) {
-  const total = currentPhotos.length;
-  const next = (currentSlide + dir + total) % total;
-  goToSlide(next);
+  if (!currentPhotos.length) return;
+  goToSlide((currentSlide + dir + currentPhotos.length) % currentPhotos.length);
 }
 
-
-
-// Telegram Mini App init
-if (window.Telegram?.WebApp) {
-  try {
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-  } catch (e) { console.warn('WebApp init:', e); }
-}
-
-// Swipe for product slider — attached once globally
-(function() {
-  let swipeStartX = 0;
+// ─── Swipe (attached once at startup) ────────────────────────────────────────
+{
+  let sx = 0, active = false;
   document.addEventListener('touchstart', e => {
-    const slider = document.getElementById('productSlider');
-    if (slider && slider.contains(e.target)) {
-      swipeStartX = e.touches[0].clientX;
-    }
+    active = document.getElementById('productModal')?.classList.contains('open')
+          && document.getElementById('productSlider')?.contains(e.target);
+    if (active) sx = e.touches[0].clientX;
   }, { passive: true });
+
   document.addEventListener('touchend', e => {
-    const slider = document.getElementById('productSlider');
-    if (!slider || !slider.contains(e.target)) return;
-    if (!e.changedTouches.length) return;
-    const diff = swipeStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
+    if (!active || !e.changedTouches.length) return;
+    active = false;
+    const dx = sx - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 40) slidePhoto(dx > 0 ? 1 : -1);
   }, { passive: true });
-})();
+}
 
-// СТАРТ
-loadProducts();
-updateCategorySelect();
-
-// КОРЗИНА
-let cart = [];
-
-function addToCart(product) {
-  const existing = cart.find(item => item.id === product.id);
-  if (existing) {
-    existing.quantity += 1;
-  } else {
-    cart.push({ ...product, quantity: 1 });
-  }
+// ─── Cart ─────────────────────────────────────────────────────────────────────
+function addToCart(p) {
+  const ex = cart.find(i => i.id === p.id);
+  if (ex) { ex.quantity++; } else { cart.push({ ...p, quantity: 1 }); }
   updateCartCount();
 }
 
-function removeFromCart(index) {
-  cart.splice(index, 1);
+function removeFromCart(i) {
+  cart.splice(i, 1);
+  updateCartCount();
+  renderCart();
+}
+
+function changeQty(i, dir) {
+  cart[i].quantity += dir;
+  if (cart[i].quantity <= 0) cart.splice(i, 1);
   updateCartCount();
   renderCart();
 }
 
 function updateCartCount() {
-  const count = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const n     = cart.reduce((s, i) => s + i.quantity, 0);
   const badge = document.getElementById('cartCount');
-  if (count > 0) {
-    badge.style.display = 'flex';
-    badge.textContent = count;
-  } else {
-    badge.style.display = 'none';
-  }
+  badge.textContent   = n;
+  badge.style.display = n ? 'flex' : 'none';
 }
 
-function openCart() {
-  renderCart();
-  document.getElementById('cartModal').classList.add('open');
-}
-
-function closeCart() {
-  document.getElementById('cartModal').classList.remove('open');
-}
+function openCart()  { renderCart(); document.getElementById('cartModal').classList.add('open'); }
+function closeCart() { document.getElementById('cartModal').classList.remove('open'); }
 
 function renderCart() {
-  const list = document.getElementById('cartList');
-  const total = document.getElementById('cartTotal');
+  const list     = document.getElementById('cartList');
+  const totalEl  = document.getElementById('cartTotal');
   const orderBtn = document.getElementById('cartOrderBtn');
 
-  if (cart.length === 0) {
-    list.innerHTML = '<div class="cart-empty">Savat bo\'sh</div>';
-    total.style.display = 'none';
-    orderBtn.style.display = 'none';
+  if (!cart.length) {
+    list.innerHTML        = "<div class='cart-empty'>Savat bo'sh</div>";
+    totalEl.style.display = orderBtn.style.display = 'none';
     return;
   }
 
-  list.innerHTML = '';
-  let totalPrice = 0;
-
-  cart.forEach((item, i) => {
-    const price = parseInt(item.price.replace(/[^0-9]/g, ''));
-    totalPrice += price * item.quantity;
-
-    list.innerHTML += `
+  let total = 0;
+  list.innerHTML = cart.map((item, i) => {
+    total += item.priceRaw * item.quantity;
+    return `
       <div class="cart-item">
         <div class="cart-item-name">${item.name} (${item.brand})</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <button onclick="changeQty(${i}, -1)" style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">−</button>
+          <button onclick="changeQty(${i},-1)" style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">−</button>
           <span>${item.quantity}</span>
-          <button onclick="changeQty(${i}, 1)" style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">+</button>
+          <button onclick="changeQty(${i},1)"  style="border:1px solid #ddd;background:#fff;border-radius:6px;width:24px;height:24px;cursor:pointer">+</button>
         </div>
         <div class="cart-item-price">${item.price}</div>
         <button class="cart-remove" onclick="removeFromCart(${i})">✕</button>
-      </div>
-    `;
-  });
+      </div>`;
+  }).join('');
 
-  total.style.display = 'block';
-  total.textContent = 'Jami: ' + totalPrice.toLocaleString() + ' ₩';
-  orderBtn.style.display = 'block';
-}
-
-function changeQty(index, dir) {
-  cart[index].quantity += dir;
-  if (cart[index].quantity <= 0) {
-    cart.splice(index, 1);
-  }
-  updateCartCount();
-  renderCart();
+  totalEl.textContent   = 'Jami: ' + total.toLocaleString('en-US') + ' ₩';
+  totalEl.style.display = orderBtn.style.display = 'block';
 }
 
 function sendCartToSeller() {
-  if (cart.length === 0) return;
-
-  let message = 'Salom! Buyurtma bermoqchiman:\n\n';
-  cart.forEach(item => {
-    message += `• ${item.name} (${item.brand}) x${item.quantity} — ${item.price}\n`;
-  });
-
-  const total = cart.reduce((sum, item) => {
-    const price = parseInt(item.price.replace(/[^0-9]/g, ''));
-    return sum + price * item.quantity;
-  }, 0);
-
-  message += `\nJami: ${total.toLocaleString()} ₩`;
-
-  tgOpen('eyf1n', message);
+  if (!cart.length) return;
+  const total = cart.reduce((s, i) => s + i.priceRaw * i.quantity, 0);
+  const msg   = "Salom! Buyurtma bermoqchiman:\n\n"
+    + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}`).join('\n')
+    + `\n\nJami: ${total.toLocaleString('en-US')} ₩`;
+  tgOpen(SELLER, msg);
 }
+
+// ─── Admin (site panel) ───────────────────────────────────────────────────────
+let tapCount = 0, tapTimer = null;
+function handleAdminTap() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+  if (tapCount >= 5) { tapCount = 0; openAdmin(); }
+}
+
+function openAdmin() {
+  const pw = prompt('Parol:');
+  if (pw !== '1234') { alert("Noto'g'ri parol"); return; }
+  renderProductList();
+  renderCategoryList();
+  document.getElementById('adminModal').classList.add('open');
+}
+function closeAdmin() { document.getElementById('adminModal').classList.remove('open'); }
+
+function renderProductList() {
+  document.getElementById('productList').innerHTML = products.map((p, i) => `
+    <div class="product-item">
+      <span style="font-size:12px">🆔 ${p.id} — <b>${p.brand}</b> ${p.name}</span>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="del-btn" style="background:#e8f0fe;color:#1a56db" onclick="editProduct(${i})">✏️</button>
+        <button class="del-btn" onclick="deleteProduct(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+let editIndex = -1;
+function editProduct(i) {
+  editIndex = i;
+  const p = products[i];
+  document.getElementById('editName').value        = p.name;
+  document.getElementById('editBrand').value       = p.brand;
+  document.getElementById('editPrice').value       = p.priceRaw || '';
+  document.getElementById('editImage').value       = p.images[0] || '';
+  document.getElementById('editDescription').value = p.description;
+  document.getElementById('editStock').value       = p.inStock ? 'true' : 'false';
+
+  const sel = document.getElementById('editCategory');
+  sel.innerHTML = categories.slice(1)
+    .map(c => `<option value="${c.id}" ${c.id === p.category ? 'selected' : ''}>${c.label}</option>`)
+    .join('');
+
+  document.getElementById('adminModal').classList.remove('open');
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveEdit() {
+  const name    = document.getElementById('editName').value.trim();
+  const brand   = document.getElementById('editBrand').value.trim();
+  const price   = document.getElementById('editPrice').value.trim();
+  const image   = document.getElementById('editImage').value.trim();
+  const desc    = document.getElementById('editDescription').value.trim();
+  const cat     = document.getElementById('editCategory').value;
+  const inStock = document.getElementById('editStock').value === 'true';
+  if (!name || !brand || !price) return alert('Nomi, brend va narxni kiriting');
+  try {
+    await fetch(`${SHEETDB}/id/${products[editIndex].id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: {
+        'name ': name, brand, category: cat, price,
+        image: image || products[editIndex].images[0] || '',
+        description: desc,
+        inStock: String(inStock)
+      }})
+    });
+    await loadProducts();
+    closeEdit();
+    document.getElementById('adminModal').classList.add('open');
+    renderProductList();
+  } catch { alert('Xato yuz berdi'); }
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
+
+async function addProduct() {
+  const name    = document.getElementById('newName').value.trim();
+  const brand   = document.getElementById('newBrand').value.trim();
+  const cat     = document.getElementById('newCategory').value;
+  const price   = document.getElementById('newPrice').value.trim();
+  const image   = document.getElementById('newImage').value.trim();
+  const desc    = document.getElementById('newDescription').value.trim();
+  const inStock = document.getElementById('newStock').value === 'true';
+  if (!name || !brand || !price) return alert('Nomi, brend va narxni kiriting');
+  try {
+    await fetch(SHEETDB, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [{
+        id: String(Date.now()), 'name ': name, brand, category: cat,
+        price, image: image || 'https://placehold.co/300x300/f0f0f0/999?text=?',
+        description: desc, inStock: String(inStock)
+      }]})
+    });
+    await loadProducts();
+    ['newName','newBrand','newPrice','newImage','newDescription']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    renderProductList();
+    alert("Mahsulot qo'shildi!");
+  } catch { alert('Xato yuz berdi'); }
+}
+
+async function deleteProduct(i) {
+  if (!confirm("Mahsulotni o'chirasizmi?")) return;
+  try {
+    await fetch(`${SHEETDB}/id/${products[i].id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    await loadProducts();
+    renderProductList();
+  } catch { alert('Xato yuz berdi'); }
+}
+
+function renderCategoryList() {
+  const list = document.getElementById('categoryList');
+  list.innerHTML = categories.slice(1).map(c =>
+    `<div class="product-item"><span>${c.label}</span></div>`
+  ).join('') || '<div style="color:#999;font-size:13px;padding:8px 0">—</div>';
+}
+
+// Categories are managed via the Telegram bot (not editable here)
+function addCategory() {
+  alert("Kategoriyalarni Telegram bot orqali boshqaring (📁 Kategoriyalar).");
+}
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+loadProducts();
