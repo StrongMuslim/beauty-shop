@@ -140,7 +140,7 @@ card.onclick = (e) => {
           </button>
           <button class="order-btn"
             ${!p.inStock ? 'disabled' : ''}
-            onclick="event.stopPropagation(); tgOpen('unitybeautykr', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
+            onclick="event.stopPropagation(); tgOpen('eyf1n', 'Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman')">
             Sotuvchiga yozish
           </button>
         </div>
@@ -437,7 +437,7 @@ document.getElementById('modalDescription').textContent = p.description || '';
   if (p.inStock) {
     orderBtn.disabled = false;
     orderBtn.style.background = '#222';
-    orderBtn.onclick = () => tgOpen('unitybeautykr', `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`);
+    orderBtn.onclick = () => tgOpen('eyf1n', `Salom! ${p.name} (${p.brand}) buyurtma bermoqchiman`);
   } else {
     orderBtn.disabled = true;
     orderBtn.style.background = '#ccc';
@@ -600,5 +600,5 @@ function sendCartToSeller() {
 
   message += `\nJami: ${total.toLocaleString()} ₩`;
 
-  tgOpen('unitybeautykr', message);
+  tgOpen('eyf1n', message);
 }
