@@ -24,10 +24,11 @@ if (window.Telegram?.WebApp) {
 // Open Telegram chat. Inside Mini App: just open the chat (no prefill).
 // In browser: open with prefilled text.
 function tgOpen(username, text) {
+  const url = `https://t.me/${username}?text=${encodeURIComponent(text)}`;
   if (window.Telegram?.WebApp?.openTelegramLink) {
-    Telegram.WebApp.openTelegramLink(`https://t.me/${username}`);
+    Telegram.WebApp.openTelegramLink(url);
   } else {
-    window.open(`https://t.me/${username}?text=${encodeURIComponent(text)}`);
+    window.open(url);
   }
 }
 
