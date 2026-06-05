@@ -25,10 +25,10 @@ if (window.Telegram?.WebApp) {
 // In browser: open with prefilled text.
 function tgOpen(username, text) {
   const url = `https://t.me/${username}?text=${encodeURIComponent(text)}`;
-  if (window.Telegram?.WebApp?.openTelegramLink) {
-    Telegram.WebApp.openTelegramLink(url);
+  if (window.Telegram?.WebApp?.openLink) {
+    Telegram.WebApp.openLink(url);
   } else {
-    window.open(url);
+    window.open(url, '_blank');
   }
 }
 
