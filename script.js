@@ -453,14 +453,6 @@ document.getElementById('modalDescription').textContent = p.description || '';
     };
   }
 
-  // Swipe support
-  const sliderEl = document.getElementById('productSlider');
-  let swipeStartX = 0;
-  sliderEl.ontouchstart = e => { swipeStartX = e.touches[0].clientX; };
-  sliderEl.ontouchend = e => {
-    const diff = swipeStartX - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
-  };
 
   document.getElementById('productModal').classList.add('open');
 }
@@ -494,6 +486,24 @@ if (window.Telegram?.WebApp) {
     Telegram.WebApp.expand();
   } catch (e) { console.warn('WebApp init:', e); }
 }
+
+// Swipe for product slider — attached once globally
+(function() {
+  let swipeStartX = 0;
+  document.addEventListener('touchstart', e => {
+    const slider = document.getElementById('productSlider');
+    if (slider && slider.contains(e.target)) {
+      swipeStartX = e.touches[0].clientX;
+    }
+  }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const slider = document.getElementById('productSlider');
+    if (!slider || !slider.contains(e.target)) return;
+    if (!e.changedTouches.length) return;
+    const diff = swipeStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
+  }, { passive: true });
+})();
 
 // СТАРТ
 loadProducts();
