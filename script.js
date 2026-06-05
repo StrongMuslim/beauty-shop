@@ -443,6 +443,16 @@ document.getElementById('modalDescription').textContent = p.description || '';
     orderBtn.style.background = '#ccc';
   }
 
+  const cartBtn = document.getElementById('modalCartBtn');
+  if (cartBtn) {
+    cartBtn.disabled = !p.inStock;
+    cartBtn.style.opacity = p.inStock ? '1' : '0.5';
+    cartBtn.onclick = () => {
+      if (!p.inStock) return;
+      addToCart(p);
+    };
+  }
+
   // Swipe support
   const sliderEl = document.getElementById('productSlider');
   let swipeStartX = 0;
