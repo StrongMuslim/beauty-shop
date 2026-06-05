@@ -3,7 +3,7 @@ const SHEET_ID  = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
 const SHEETDB   = 'https://sheetdb.io/api/v1/htqsduumkcfa9';
-const SELLER    = 'eyf1n'; // username to open when "Sotuvchiga yozish"
+const SELLER    = 'unitybeautykr'; // username to open when "Sotuvchiga yozish"
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let products        = [];
