@@ -180,7 +180,7 @@ function renderProducts(list) {
     card.querySelector('.js-seller').addEventListener('click', e => {
       e.stopPropagation();
       notifyAdmin({ type: 'product', name: p.name, brand: p.brand, price: p.price + (p.price_uzs ? ' / ' + p.price_uzs : '') });
-      tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
+      tgOpen(SELLER, `Assalomu alaykum! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
     });
     card.addEventListener('click', () => openProduct(p));
 
@@ -261,7 +261,7 @@ function openProduct(p) {
     cartBtn.addEventListener('click',  () => addToCart(p));
     orderBtn.addEventListener('click', () => {
       notifyAdmin({ type: 'product', name: p.name, brand: p.brand, price: p.price + (p.price_uzs ? ' / ' + p.price_uzs : '') });
-      tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
+      tgOpen(SELLER, `Assalomu alaykum! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
     });
   }
 
@@ -377,7 +377,7 @@ function sendCartToSeller() {
     items: cart.map(i => ({ name: i.name, qty: i.quantity, price: i.price + (i.price_uzs ? ' / ' + i.price_uzs : '') })),
     total: totalStr
   });
-  const msg = "Salom! Buyurtma bermoqchiman:\n\n"
+  const msg = "Assalomu alaykum! Buyurtma bermoqchiman:\n\n"
     + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}${i.price_uzs ? ' / ' + i.price_uzs : ''}`).join('\n')
     + `\n\nJami: ${totalStr}`;
   tgOpen(SELLER, msg);

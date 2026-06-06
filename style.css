@@ -23,6 +23,15 @@ body {
   z-index: 10;
 }
 
+.order-banner {
+  background: #f5f0e8;
+  color: #7a5c2e;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e8dcc8;
+}
+
 .search {
   padding: 12px 16px;
   background: #fff;
