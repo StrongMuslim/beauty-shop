@@ -2,7 +2,8 @@
 const SHEET_ID  = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 const SHEET_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1`;
 const CAT_URL   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=categories`;
-const SELLER    = 'unitybeautykr'; // username to open when "Sotuvchiga yozish"
+const SELLER     = 'unitybeautykr';
+const NOTIFY_URL = 'https://worker-production-ccde.up.railway.app/notify';
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let products        = [];
@@ -29,6 +30,18 @@ function tgOpen(username, text) {
   } else {
     window.open(url, '_blank');
   }
+}
+
+// Send notification to admin bot (fire-and-forget, never blocks UX)
+function notifyAdmin(payload) {
+  const user = window.Telegram?.WebApp?.initDataUnsafe?.user || {};
+  try {
+    fetch(NOTIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, user })
+    }).catch(() => {});
+  } catch (_) {}
 }
 
 // Inject Cloudinary resize/optimize transforms. Non-Cloudinary URLs pass through.
@@ -162,6 +175,7 @@ function renderProducts(list) {
     });
     card.querySelector('.js-seller').addEventListener('click', e => {
       e.stopPropagation();
+      notifyAdmin({ type: 'product', name: p.name, brand: p.brand, price: p.price + (p.price_uzs ? ' / ' + p.price_uzs : '') });
       tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
     });
     card.addEventListener('click', () => openProduct(p));
@@ -241,7 +255,10 @@ function openProduct(p) {
 
   if (p.inStock) {
     cartBtn.addEventListener('click',  () => addToCart(p));
-    orderBtn.addEventListener('click', () => tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`));
+    orderBtn.addEventListener('click', () => {
+      notifyAdmin({ type: 'product', name: p.name, brand: p.brand, price: p.price + (p.price_uzs ? ' / ' + p.price_uzs : '') });
+      tgOpen(SELLER, `Salom! ${p.name} (${p.brand})\nNarx: ${p.price}${p.price_uzs ? ' / ' + p.price_uzs : ''}\n\nBuyurtma bermoqchiman`);
+    });
   }
 
   document.getElementById('productModal').classList.add('open');
@@ -348,9 +365,15 @@ function renderCart() {
 function sendCartToSeller() {
   if (!cart.length) return;
   const total = cart.reduce((s, i) => s + i.priceRaw * i.quantity, 0);
-  const msg   = "Salom! Buyurtma bermoqchiman:\n\n"
+  const totalStr = total.toLocaleString('en-US') + ' ₩';
+  notifyAdmin({
+    type: 'cart',
+    items: cart.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
+    total: totalStr
+  });
+  const msg = "Salom! Buyurtma bermoqchiman:\n\n"
     + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}`).join('\n')
-    + `\n\nJami: ${total.toLocaleString('en-US')} ₩`;
+    + `\n\nJami: ${totalStr}`;
   tgOpen(SELLER, msg);
 }
 
