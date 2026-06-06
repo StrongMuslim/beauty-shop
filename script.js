@@ -56,7 +56,10 @@ async function loadProducts() {
     const [pRes, cRes] = await Promise.all([fetch(SHEET_URL), fetch(CAT_URL)]);
     const pJson = JSON.parse((await pRes.text()).slice(47, -2));
     const cJson = JSON.parse((await cRes.text()).slice(47, -2));
-    const kurs  = pJson.table.rows[0]?.c[9]?.v || 3.5;
+    const rawKurs = pJson.table.rows[0]?.c[9]?.v;
+    const kurs = (typeof rawKurs === 'number' && !isNaN(rawKurs)) ? rawKurs
+               : (typeof rawKurs === 'string' && parseFloat(rawKurs) > 0) ? parseFloat(rawKurs)
+               : 3.5;
 
     products = pJson.table.rows.map(r => {
       const price    = r.c[4]?.v ? Number(r.c[4].v) : 0;
