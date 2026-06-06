@@ -78,6 +78,7 @@ async function loadProducts() {
         uzsRaw:      uzs,
         price_uzs:   uzs  ? uzs.toLocaleString('en-US') + " so'm" : '',
         inStock:     r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE',
+        comingSoon:  String(r.c[6]?.v).toUpperCase() === 'SOON',
         images:      r.c[7]?.v
           ? String(r.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean)
           : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
@@ -86,8 +87,9 @@ async function loadProducts() {
       };
     });
 
+    const stockRank = p => p.inStock ? 0 : p.comingSoon ? 1 : 2;
     products.sort((a, b) => {
-      if (a.inStock !== b.inStock) return a.inStock ? -1 : 1; // mavjud — yuqorida
+      if (stockRank(a) !== stockRank(b)) return stockRank(a) - stockRank(b);
       return a.brand.localeCompare(b.brand);
     });
 
@@ -154,6 +156,8 @@ function renderProducts(list) {
     card.style.cursor = 'pointer';
 
     const off = !p.inStock;
+    const badgeClass = p.inStock ? 'in-stock' : p.comingSoon ? 'coming-soon' : 'out-stock';
+    const badgeText  = p.inStock ? 'Mavjud' : p.comingSoon ? 'Yaqinda sotuvda' : 'Mavjud emas';
     card.innerHTML = `
       <img loading="lazy" decoding="async"
            src="${cldOpt(p.images[0], 400)}" alt="${p.name}"
@@ -163,7 +167,7 @@ function renderProducts(list) {
         <div class="name">${p.name}</div>
         <div class="price">${p.price}</div>
         ${p.price_uzs ? `<div style="font-size:12px;color:#999;margin-top:2px">${p.price_uzs}</div>` : ''}
-        <span class="badge ${off ? 'out-stock' : 'in-stock'}">${off ? 'Mavjud emas' : 'Mavjud'}</span>
+        <span class="badge ${badgeClass}">${badgeText}</span>
         <div class="card-actions">
           <button class="order-btn js-cart" ${off ? 'disabled' : ''}
             style="${off ? 'background:#f5f5f5;color:#ccc;border:1px solid #eee' : 'background:#fff;color:#222;border:1px solid #222'};margin-bottom:6px">
@@ -241,8 +245,8 @@ function openProduct(p) {
   document.getElementById('modalDescription').textContent = p.description || '';
 
   const badge = document.getElementById('modalBadge');
-  badge.textContent = p.inStock ? 'Mavjud' : 'Mavjud emas';
-  badge.className   = 'badge ' + (p.inStock ? 'in-stock' : 'out-stock');
+  badge.textContent = p.inStock ? 'Mavjud' : p.comingSoon ? 'Yaqinda sotuvda' : 'Mavjud emas';
+  badge.className   = 'badge ' + (p.inStock ? 'in-stock' : p.comingSoon ? 'coming-soon' : 'out-stock');
 
   // Replace buttons to clear old event listeners cleanly
   const cartOld  = document.getElementById('modalCartBtn');

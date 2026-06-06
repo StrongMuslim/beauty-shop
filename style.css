@@ -146,6 +146,11 @@ body {
   color: #1a7a4a;
 }
 
+.coming-soon {
+  background: #fff8e1;
+  color: #b07800;
+}
+
 .out-stock {
   background: #fee;
   color: #c0392b;
