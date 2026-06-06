@@ -71,6 +71,7 @@ async function loadProducts() {
         category:    r.c[3]?.v || '',
         price:       price ? price.toLocaleString('en-US') + ' ₩' : '',
         priceRaw:    price,
+        uzsRaw:      uzs,
         price_uzs:   uzs  ? uzs.toLocaleString('en-US') + " so'm" : '',
         inStock:     r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE',
         images:      r.c[7]?.v
@@ -367,15 +368,17 @@ function renderCart() {
 
 function sendCartToSeller() {
   if (!cart.length) return;
-  const total = cart.reduce((s, i) => s + i.priceRaw * i.quantity, 0);
-  const totalStr = total.toLocaleString('en-US') + ' ₩';
+  const total    = cart.reduce((s, i) => s + i.priceRaw * i.quantity, 0);
+  const totalUzs = cart.reduce((s, i) => s + i.uzsRaw  * i.quantity, 0);
+  const totalStr = total.toLocaleString('en-US') + ' ₩'
+    + (totalUzs ? ' / ' + totalUzs.toLocaleString('en-US') + " so'm" : '');
   notifyAdmin({
     type: 'cart',
-    items: cart.map(i => ({ name: i.name, qty: i.quantity, price: i.price })),
+    items: cart.map(i => ({ name: i.name, qty: i.quantity, price: i.price + (i.price_uzs ? ' / ' + i.price_uzs : '') })),
     total: totalStr
   });
   const msg = "Salom! Buyurtma bermoqchiman:\n\n"
-    + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}`).join('\n')
+    + cart.map(i => `• ${i.name} (${i.brand}) x${i.quantity} — ${i.price}${i.price_uzs ? ' / ' + i.price_uzs : ''}`).join('\n')
     + `\n\nJami: ${totalStr}`;
   tgOpen(SELLER, msg);
 }
