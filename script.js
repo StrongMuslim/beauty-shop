@@ -104,12 +104,16 @@ function renderCategories() {
 
 // ─── Product grid ─────────────────────────────────────────────────────────────
 function filterProducts() {
-  const q = document.getElementById('searchInput').value.toLowerCase();
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
   renderProducts(
     products.filter(p =>
       !p.hidden &&
-      p.brand.toLowerCase().includes(q) &&
-      (currentCategory === 'barchasi' || p.category === currentCategory)
+      (currentCategory === 'barchasi' || p.category === currentCategory) &&
+      (!q ||
+        p.brand.toLowerCase().includes(q) ||
+        p.name.toLowerCase().includes(q) ||
+        p.id === q
+      )
     )
   );
 }
