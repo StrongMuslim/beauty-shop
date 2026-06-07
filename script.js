@@ -66,8 +66,11 @@ async function loadProducts() {
                : 3.5;
 
     products = pJson.table.rows.map(r => {
-      const price    = r.c[4]?.v ? Number(r.c[4].v) : 0;
-      const uzs      = r.c[5]?.v ? Number(r.c[5].v) : (price ? Math.round(price * kurs) : 0);
+      const price      = r.c[4]?.v ? Number(r.c[4].v) : 0;
+      const uzs        = r.c[5]?.v ? Number(r.c[5].v) : (price ? Math.round(price * kurs) : 0);
+      const descRaw    = r.c[8]?.v || '';
+      const comingSoon = descRaw.startsWith('[SOON]');
+      const inStock    = !comingSoon && (r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE');
       return {
         id:          String(r.c[0]?.v || ''),
         name:        r.c[1]?.v || '',
@@ -77,12 +80,12 @@ async function loadProducts() {
         priceRaw:    price,
         uzsRaw:      uzs,
         price_uzs:   uzs  ? uzs.toLocaleString('en-US') + " so'm" : '',
-        inStock:     r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE',
-        comingSoon:  String(r.c[6]?.v).toUpperCase() === 'SOON',
+        inStock,
+        comingSoon,
         images:      r.c[7]?.v
           ? String(r.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean)
           : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
-        description: r.c[8]?.v || '',
+        description: descRaw.replace(/^\[SOON\]\s*/, ''),
         hidden:      r.c[10]?.v === true || String(r.c[10]?.v).toUpperCase() === 'TRUE',
       };
     });
