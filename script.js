@@ -70,7 +70,11 @@ async function loadProducts() {
       const uzs        = r.c[5]?.v ? Number(r.c[5].v) : (price ? Math.round(price * kurs) : 0);
       const descRaw    = r.c[8]?.v || '';
       const comingSoon = descRaw.startsWith('[SOON]');
-      const inStock    = !comingSoon && (r.c[6]?.v === true || String(r.c[6]?.v).toUpperCase() === 'TRUE');
+      const outOfStock = !comingSoon && descRaw.startsWith('[OUT]');
+      // null from gviz = SheetDB wrote string "TRUE" → treat as in-stock
+      // boolean false  = genuinely out of stock in Google Sheets
+      const inStock    = !comingSoon && !outOfStock && r.c[6]?.v !== false;
+      const featured   = r.c[11]?.v === true || String(r.c[11]?.v).toUpperCase() === 'TRUE';
       return {
         id:          String(r.c[0]?.v || ''),
         name:        r.c[1]?.v || '',
@@ -82,15 +86,22 @@ async function loadProducts() {
         price_uzs:   uzs  ? uzs.toLocaleString('en-US') + " so'm" : '',
         inStock,
         comingSoon,
+        featured,
         images:      r.c[7]?.v
           ? String(r.c[7].v).split(/[|,]/).map(s => s.trim()).filter(Boolean)
           : ['https://placehold.co/300x300/f0f0f0/999?text=?'],
-        description: descRaw.replace(/^\[SOON\]\s*/, ''),
+        description: descRaw.replace(/^\[(SOON|OUT)\]\s*/, ''),
         hidden:      r.c[10]?.v === true || String(r.c[10]?.v).toUpperCase() === 'TRUE',
       };
     });
 
-    const stockRank = p => p.inStock ? 0 : p.comingSoon ? 1 : 2;
+    // Sort: featured in-stock first → regular in-stock → coming soon → out of stock
+    const stockRank = p => {
+      if (p.inStock && p.featured) return 0;
+      if (p.inStock)               return 1;
+      if (p.comingSoon)            return 2;
+      return 3;
+    };
     products.sort((a, b) => {
       if (stockRank(a) !== stockRank(b)) return stockRank(a) - stockRank(b);
       return a.brand.localeCompare(b.brand);
@@ -162,9 +173,13 @@ function renderProducts(list) {
     const badgeClass = p.inStock ? 'in-stock' : p.comingSoon ? 'coming-soon' : 'out-stock';
     const badgeText  = p.inStock ? 'Mavjud' : p.comingSoon ? 'Yaqinda sotuvda' : 'Mavjud emas';
     card.innerHTML = `
-      <img loading="lazy" decoding="async"
-           src="${cldOpt(p.images[0], 400)}" alt="${p.name}"
-           onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'">
+      <div style="position:relative">
+        <img loading="lazy" decoding="async"
+             src="${cldOpt(p.images[0], 400)}" alt="${p.name}"
+             onerror="this.src='https://placehold.co/300x300/f0f0f0/999?text=?'"
+             style="width:100%;aspect-ratio:1;object-fit:cover;background:#f0f0f0;display:block">
+        ${p.featured ? '<div class="featured-ribbon">⭐ Top</div>' : ''}
+      </div>
       <div class="card-body">
         <div class="brand">${p.brand}</div>
         <div class="name">${p.name}</div>
@@ -250,6 +265,13 @@ function openProduct(p) {
   const badge = document.getElementById('modalBadge');
   badge.textContent = p.inStock ? 'Mavjud' : p.comingSoon ? 'Yaqinda sotuvda' : 'Mavjud emas';
   badge.className   = 'badge ' + (p.inStock ? 'in-stock' : p.comingSoon ? 'coming-soon' : 'out-stock');
+
+  // Featured label in modal
+  const oldFeat = document.getElementById('modalFeatured');
+  if (oldFeat) oldFeat.remove();
+  if (p.featured) {
+    badge.insertAdjacentHTML('afterend', '<span id="modalFeatured" class="badge featured-badge">⭐ Top mahsulot</span>');
+  }
 
   // Replace buttons to clear old event listeners cleanly
   const cartOld  = document.getElementById('modalCartBtn');
