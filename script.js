@@ -245,7 +245,7 @@ function openProduct(p) {
     img.loading   = 'eager';   // загружаем все сразу
     img.className = i === 0 ? 'active' : '';
     img.onerror   = () => { img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?'; };
-    slider.insertBefore(img, slider.querySelector('.slider-btn.prev').nextSibling);
+    slider.insertBefore(img, dots); // вставляем перед dots — сохраняет правильный порядок
 
     const dot = document.createElement('div');
     dot.className = 'dot' + (i === 0 ? ' active' : '');
