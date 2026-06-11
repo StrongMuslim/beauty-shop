@@ -55,7 +55,18 @@ function cldOpt(url, w) {
 }
 
 // ─── Load data from Google Sheets ────────────────────────────────────────────
+function showGridSkeleton() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = Array(6).fill(`
+    <div class="card-skeleton">
+      <div class="card-skeleton-img"></div>
+      <div class="card-skeleton-line"></div>
+      <div class="card-skeleton-line short"></div>
+    </div>`).join('');
+}
+
 async function loadProducts() {
+  showGridSkeleton();
   try {
     const [pRes, cRes] = await Promise.all([fetch(SHEET_URL), fetch(CAT_URL)]);
     const pJson = JSON.parse((await pRes.text()).slice(47, -2));
