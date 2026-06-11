@@ -341,32 +341,38 @@ function closeProduct() {
 }
 
 function goToSlide(i) {
-  const slider  = document.getElementById('productSlider');
-  const imgs    = slider.querySelectorAll('img');
-  const dots    = document.getElementById('sliderDots').querySelectorAll('.dot');
+  const slider   = document.getElementById('productSlider');
+  const imgs     = slider.querySelectorAll('img');
+  const dotEls   = document.getElementById('sliderDots').querySelectorAll('.dot');
   const skeleton = slider.querySelector('.slider-skeleton');
   const counter  = slider.querySelector('.slide-counter');
-  if (!imgs[i]) return;
-  imgs[currentSlide]?.classList.remove('active');
-  dots[currentSlide]?.classList.remove('active');
-  currentSlide = i;
-  imgs[i].classList.add('active');
-  dots[i].classList.add('active');
+  if (!imgs[i] || i === currentSlide) return;
 
-  // Update counter
+  const prev = currentSlide;
+  currentSlide = i;
+
+  // 1. Скелетон — МГНОВЕННО (transition:none на .visible)
+  if (skeleton) skeleton.classList.add('visible');
+
+  // 2. Меняем активную картинку
+  imgs[prev]?.classList.remove('active');
+  dotEls[prev]?.classList.remove('active');
+  imgs[i].classList.add('active');
+  dotEls[i].classList.add('active');
+
+  // 3. Обновляем счётчик
   if (counter && counter.style.display !== 'none') {
     counter.textContent = `${i + 1} / ${currentPhotos.length}`;
   }
 
-  // Skeleton if image not yet loaded
-  if (skeleton) {
-    if (!imgs[i].complete || imgs[i].naturalWidth === 0) {
-      skeleton.classList.add('visible');
-      imgs[i].addEventListener('load',  () => skeleton.classList.remove('visible'), { once: true });
-      imgs[i].addEventListener('error', () => skeleton.classList.remove('visible'), { once: true });
-    } else {
-      skeleton.classList.remove('visible');
-    }
+  // 4. Скрываем скелетон когда новое фото готово
+  const hideSkeleton = () => skeleton?.classList.remove('visible');
+  if (!skeleton) return;
+  if (imgs[i].complete && imgs[i].naturalWidth > 0) {
+    setTimeout(hideSkeleton, 50); // уже загружено — убираем быстро
+  } else {
+    imgs[i].addEventListener('load',  hideSkeleton, { once: true });
+    imgs[i].addEventListener('error', hideSkeleton, { once: true });
   }
 }
 
