@@ -221,15 +221,17 @@ function openProduct(p) {
   currentPhotos = p.images.length ? p.images : ['https://placehold.co/300x300/f0f0f0/999?text=?'];
 
   // Build slider
-  const slider = document.getElementById('productSlider');
-  const dots   = document.getElementById('sliderDots');
+  const slider  = document.getElementById('productSlider');
+  const dots    = document.getElementById('sliderDots');
+  const skeleton = slider.querySelector('.slider-skeleton');
+  const counter  = slider.querySelector('.slide-counter');
   slider.querySelectorAll('img').forEach(img => img.remove());
   dots.innerHTML = '';
 
   currentPhotos.forEach((src, i) => {
     const img     = document.createElement('img');
-    img.src       = cldOpt(src, 900);
-    img.loading   = i === 0 ? 'eager' : 'lazy';
+    img.src       = cldOpt(src, 800);
+    img.loading   = 'eager';   // загружаем все сразу
     img.className = i === 0 ? 'active' : '';
     img.onerror   = () => { img.src = 'https://placehold.co/300x300/f0f0f0/999?text=?'; };
     slider.insertBefore(img, slider.querySelector('.slider-btn.prev').nextSibling);
@@ -240,10 +242,32 @@ function openProduct(p) {
     dots.appendChild(dot);
   });
 
+  // Preload all images in background so swipe is instant
+  currentPhotos.forEach(src => {
+    const pre = new Image();
+    pre.src = cldOpt(src, 800);
+  });
+
   const multi = currentPhotos.length > 1;
   slider.querySelector('.prev').style.display = multi ? 'flex' : 'none';
   slider.querySelector('.next').style.display = multi ? 'flex' : 'none';
   dots.style.display = multi ? 'flex' : 'none';
+
+  // Photo counter "1 / N"
+  if (counter) {
+    counter.style.display = multi ? 'block' : 'none';
+    counter.textContent = `1 / ${currentPhotos.length}`;
+  }
+
+  // Show skeleton while first image loads
+  const firstImg = slider.querySelectorAll('img')[0];
+  if (firstImg && !firstImg.complete && skeleton) {
+    skeleton.classList.add('visible');
+    firstImg.addEventListener('load',  () => skeleton.classList.remove('visible'), { once: true });
+    firstImg.addEventListener('error', () => skeleton.classList.remove('visible'), { once: true });
+  } else if (skeleton) {
+    skeleton.classList.remove('visible');
+  }
 
   // Fill info
   document.getElementById('modalBrand').textContent = p.brand;
@@ -306,14 +330,33 @@ function closeProduct() {
 }
 
 function goToSlide(i) {
-  const imgs = document.getElementById('productSlider').querySelectorAll('img');
-  const dots = document.getElementById('sliderDots').querySelectorAll('.dot');
+  const slider  = document.getElementById('productSlider');
+  const imgs    = slider.querySelectorAll('img');
+  const dots    = document.getElementById('sliderDots').querySelectorAll('.dot');
+  const skeleton = slider.querySelector('.slider-skeleton');
+  const counter  = slider.querySelector('.slide-counter');
   if (!imgs[i]) return;
   imgs[currentSlide]?.classList.remove('active');
   dots[currentSlide]?.classList.remove('active');
   currentSlide = i;
   imgs[i].classList.add('active');
   dots[i].classList.add('active');
+
+  // Update counter
+  if (counter && counter.style.display !== 'none') {
+    counter.textContent = `${i + 1} / ${currentPhotos.length}`;
+  }
+
+  // Skeleton if image not yet loaded
+  if (skeleton) {
+    if (!imgs[i].complete || imgs[i].naturalWidth === 0) {
+      skeleton.classList.add('visible');
+      imgs[i].addEventListener('load',  () => skeleton.classList.remove('visible'), { once: true });
+      imgs[i].addEventListener('error', () => skeleton.classList.remove('visible'), { once: true });
+    } else {
+      skeleton.classList.remove('visible');
+    }
+  }
 }
 
 function slidePhoto(dir) {
