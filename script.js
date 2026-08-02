@@ -82,9 +82,12 @@ async function loadProducts() {
       const descRaw    = r.c[8]?.v || '';
       const comingSoon = descRaw.startsWith('[SOON]');
       const outOfStock = !comingSoon && descRaw.startsWith('[OUT]');
-      // null from gviz = SheetDB wrote string "TRUE" → treat as in-stock
-      // boolean false  = genuinely out of stock in Google Sheets
-      const inStock    = !comingSoon && !outOfStock && r.c[6]?.v !== false;
+      // gviz отдаёт колонку G то как boolean, то как строку — зависит от того,
+      // каких значений в ней большинство. Поэтому «нет в наличии» = и false, и "FALSE".
+      // null (SheetDB записал строку в boolean-колонку) по-прежнему = в наличии.
+      const stockRaw   = r.c[6]?.v;
+      const stockFalse = stockRaw === false || String(stockRaw).trim().toUpperCase() === 'FALSE';
+      const inStock    = !comingSoon && !outOfStock && !stockFalse;
       const featured   = r.c[11]?.v === true || String(r.c[11]?.v).toUpperCase() === 'TRUE';
       return {
         id:          String(r.c[0]?.v || ''),
