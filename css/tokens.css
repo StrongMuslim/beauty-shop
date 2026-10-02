@@ -52,35 +52,35 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #121012;
-  --surface: #1b181a;
-  --surface-2: #242022;
-  --surface-3: #312b2e;
-  --ink: #f5eff1;
-  --ink-2: #d2c9cc;
-  --muted: #9d9397;
-  --line: #2c2729;
-  --line-strong: #3b3538;
+  --bg: #1f1b1e;
+  --surface: #2a2529;
+  --surface-2: #332d31;
+  --surface-3: #403940;
+  --ink: #ece5e8;
+  --ink-2: #cbc2c6;
+  --muted: #a1979c;
+  --line: #3a3337;
+  --line-strong: #4a4247;
 
   --accent: #ee7fa1;
   --accent-hover: #f494b1;
   --accent-ink: #1b0d13;
-  --accent-soft: #3a1f2a;
+  --accent-soft: #462836;
 
   --gold: #e8bb66;
-  --gold-soft: #3a2e17;
+  --gold-soft: #45381f;
   --ok: #6fd19c;
-  --ok-soft: #173326;
+  --ok-soft: #1f3d2f;
   --warn: #f0b85a;
-  --warn-soft: #3a2c13;
+  --warn-soft: #45361c;
   --danger: #f08a8a;
-  --danger-soft: #3d1c1c;
+  --danger-soft: #4a2626;
 
   --media-bg: #ffffff;
-  --shimmer-a: #221e20;
-  --shimmer-b: #2e292b;
-  --backdrop: rgba(0, 0, 0, .62);
-  --on-media: rgba(27, 24, 26, .9);
+  --shimmer-a: #2d282b;
+  --shimmer-b: #393236;
+  --backdrop: rgba(0, 0, 0, .55);
+  --on-media: rgba(42, 37, 41, .9);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, .45);

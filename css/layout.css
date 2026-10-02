@@ -19,23 +19,31 @@
   max-width: var(--maxw);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas:
-    "brand actions"
-    "search search";
+    "brand actions actions"
+    "search search theme";
   align-items: center;
-  column-gap: 12px;
+  column-gap: 8px;
   row-gap: 10px;
 }
 .topbar .brand { grid-area: brand; }
 .topbar .search { grid-area: search; }
+.topbar .theme-btn { grid-area: theme; }
 .topbar__actions { grid-area: actions; display: flex; align-items: center; gap: 8px; }
+
+@media (max-width: 380px) {
+  .topbar .brand { font-size: 17px; gap: 7px; }
+  .topbar .brand__mark { width: 32px; height: 32px; font-size: 17px; border-radius: 11px; }
+  .topbar__actions { gap: 6px; }
+  .currency__opt { min-width: 36px; padding: 0 9px; }
+}
 
 @media (min-width: 900px) {
   .topbar__inner {
-    grid-template-columns: auto minmax(0, 560px) auto;
-    grid-template-areas: "brand search actions";
-    justify-content: space-between;
+    grid-template-columns: auto 1fr minmax(0, 560px) 1fr auto auto;
+    grid-template-areas: "brand . search . theme actions";
+    column-gap: 12px;
   }
 }
 

@@ -73,19 +73,37 @@
     },
   };
 
+  const THEME_KEY = 'ub.theme';
+
+  // A manual choice beats Telegram's and the system's scheme; the head script reads the same key.
   UB.theme = {
+    saved() {
+      const value = UB.utils.storage.get(THEME_KEY);
+      return value === 'dark' || value === 'light' ? value : null;
+    },
     current() {
+      const saved = this.saved();
+      if (saved) return saved;
       const scheme = UB.tg.colorScheme();
       if (scheme === 'dark' || scheme === 'light') return scheme;
       return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     },
     apply() {
       const root = document.documentElement;
-      root.dataset.theme = this.current();
+      const theme = this.current();
+      root.dataset.theme = theme;
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.setAttribute('aria-label', theme === 'dark' ? 'Kunduzgi rejim' : 'Tungi rejim');
       const bg = getComputedStyle(root).getPropertyValue('--bg').trim();
       if (!bg) return;
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bg);
       UB.tg.setChromeColor(bg);
+    },
+    toggle() {
+      const next = this.current() === 'dark' ? 'light' : 'dark';
+      UB.utils.storage.set(THEME_KEY, next);
+      this.apply();
+      return next;
     },
   };
 

@@ -21,6 +21,7 @@
 
 /* ─── Search ──────────────────────────────────────────────────────────────── */
 .search {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -92,6 +93,14 @@
   transition: transform .15s;
 }
 .icon-btn:active { transform: scale(.94); }
+
+.theme-btn { width: 46px; height: 46px; color: var(--ink-2); }
+.theme-btn .icon--sun,
+:root[data-theme="dark"] .theme-btn .icon--moon { display: none; }
+:root[data-theme="dark"] .theme-btn .icon--sun { display: block; }
+@media (min-width: 900px) {
+  .theme-btn { width: 42px; height: 42px; }
+}
 .cart-btn__count {
   position: absolute;
   top: -4px;

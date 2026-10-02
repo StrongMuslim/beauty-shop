@@ -4,7 +4,7 @@
   const SHEET_ID = '1J7cUeHCVm3CiwxwzGTOalSYey3f6vkEttk8ztmxXtTY';
 
   UB.config = {
-    version: '30',
+    version: '31',
     seller: 'unitybeautykr',
     instagram: 'https://instagram.com/unity.beauty.kr',
     author: 'eyf1n',

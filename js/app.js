@@ -160,6 +160,12 @@
       });
     });
 
+    $('themeBtn').addEventListener('click', () => {
+      const theme = UB.theme.toggle();
+      UB.tg.haptic('light');
+      UB.track('select_theme', { theme });
+    });
+
     $('cartBtn').addEventListener('click', () => UB.cartView.open());
     $('cartBarBtn').addEventListener('click', () => UB.cartView.open());
 
