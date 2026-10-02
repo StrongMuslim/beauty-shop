@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="uz">
+<html lang="uz" data-theme="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kosmetika do'koni</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#faf7f5">
+  <meta name="format-detection" content="telephone=no">
+  <title>Unity Beauty — Koreya kosmetikasi</title>
+  <meta name="description" content="Koreya kosmetikasi va sog'liq mahsulotlari. Koreya skladlaridan buyurtma asosida — Koreya bo'ylab va O'zbekistonga.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Unity Beauty 🦋 — Koreya kosmetikasi">
+  <meta property="og:description" content="Koreya skladlaridan kosmetika va sog'liq mahsulotlari — buyurtma asosida.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🦋%3C/text%3E%3C/svg%3E">
+
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-5T16ZCCCN1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -12,73 +20,203 @@
     gtag('config', 'G-5T16ZCCCN1');
   </script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=12">
+  <script>
+    (function () {
+      try {
+        var tg = window.Telegram && Telegram.WebApp;
+        var scheme = tg && tg.platform && tg.platform !== 'unknown' ? tg.colorScheme : null;
+        if (!scheme) scheme = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', scheme);
+      } catch (e) {}
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://docs.google.com" crossorigin>
+  <link rel="preconnect" href="https://res.cloudinary.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+
+  <!-- Every ?v= below must match UB.config.version in js/config.js -->
+  <link rel="stylesheet" href="css/tokens.css?v=30">
+  <link rel="stylesheet" href="css/base.css?v=30">
+  <link rel="stylesheet" href="css/layout.css?v=30">
+  <link rel="stylesheet" href="css/components.css?v=30">
 </head>
 <body>
+  <div id="topSentinel" class="top-sentinel" aria-hidden="true"></div>
 
-  <div class="header">Unity Beauty 🦋</div>
+  <header class="topbar" id="topbar">
+    <div class="topbar__inner">
+      <a class="brand" href="./" aria-label="Unity Beauty — bosh sahifa">
+        <span class="brand__mark" aria-hidden="true">🦋</span>
+        <span class="brand__text">Unity <span>Beauty</span></span>
+      </a>
 
-  <div class="order-banner">
-    🇰🇷 Buyurtma asosida — Koreya skladlaridan · Yetkazib berish alohida
-  </div>
+      <label class="search" for="searchInput">
+        <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="searchInput" type="search" placeholder="Mahsulot, brend yoki ID" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" aria-label="Qidirish">
+        <button type="button" class="search__clear" id="searchClear" aria-label="Tozalash" hidden>
+          <svg class="icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </label>
 
-  <div class="search">
-    <input type="text" id="searchInput" placeholder="Nomi, brend yoki 🆔 bo'yicha qidirish..." oninput="filterProducts()">
-  </div>
-
-  <div class="categories" id="categories"></div>
-
-  <div class="grid" id="grid"></div>
-
-  <button class="cart-icon" onclick="openCart()">
-    🛒
-    <span class="cart-count" id="cartCount" style="display:none">0</span>
-  </button>
-
-
-  <!-- Модальное окно товара -->
-<div class="product-modal" id="productModal">
-  <div class="product-modal-box" style="position:relative">
-    <button class="product-modal-close" onclick="closeProduct()">✕</button>
-    <div class="slider" id="productSlider">
-      <div class="slider-skeleton"></div>
-      <div class="slide-counter"></div>
-      <button class="slider-btn prev" onclick="slidePhoto(-1)">‹</button>
-      <button class="slider-btn next" onclick="slidePhoto(1)">›</button>
-      <div class="slider-dots" id="sliderDots"></div>
+      <div class="topbar__actions">
+        <div class="currency" role="group" aria-label="Valyuta">
+          <button type="button" class="currency__opt" data-currency="UZS" aria-pressed="false">so'm</button>
+          <button type="button" class="currency__opt" data-currency="KRW" aria-pressed="false">₩</button>
+        </div>
+        <button type="button" class="icon-btn cart-btn" id="cartBtn" aria-label="Savat">
+          <svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7h12l-1 13H7z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/></svg>
+          <span class="cart-btn__count" id="cartCount" hidden>0</span>
+        </button>
+      </div>
     </div>
-    <div class="product-modal-body">
-      <div class="brand" id="modalBrand"></div>
-      <div class="name" id="modalName"></div>
-      <div class="price" id="modalPrice"></div>
-      <div id="modalId" style="font-size:12px;color:#999;margin-top:6px;margin-bottom:2px"></div>
-      <span class="badge" id="modalBadge"></span>
-      <div class="description" id="modalDescription"></div>
-      <button class="order-btn" id="modalCartBtn">Savatga qo'shish</button>
-      <button class="order-btn" id="modalOrderBtn">Sotuvchiga yozish</button>
+  </header>
+
+  <main class="main" id="main">
+    <section class="hero">
+      <p class="hero__eyebrow">🇰🇷 Koreya skladlaridan</p>
+      <h1 class="hero__title">Koreya kosmetikasi — <span>buyurtma asosida</span></h1>
+      <p class="hero__sub">Koreya bo'ylab va O'zbekistonga yetkazib beramiz. Yetkazib berish narxi alohida hisoblanadi.</p>
+    </section>
+
+    <section class="section" id="featuredSection" aria-labelledby="featuredTitle" hidden>
+      <div class="section-head">
+        <h2 id="featuredTitle">★ Top tanlov</h2>
+        <span class="section-head__hint">Tavsiya etamiz</span>
+      </div>
+      <div class="rail scroll-x" id="featuredRail"></div>
+    </section>
+
+    <section class="section" aria-labelledby="catalogTitle">
+      <div class="section-head">
+        <h2 id="catalogTitle">Katalog</h2>
+      </div>
+      <div class="chips scroll-x" id="categoryChips" aria-label="Kategoriyalar"></div>
+      <div class="chips chips--brands scroll-x" id="brandChips" aria-label="Brendlar"></div>
+
+      <div class="toolbar">
+        <p class="toolbar__count" id="resultCount" aria-live="polite"></p>
+        <div class="toolbar__controls">
+          <label class="toggle">
+            <input type="checkbox" id="inStockOnly">
+            <span>Mavjud</span>
+          </label>
+          <label class="select">
+            <span class="sr-only">Saralash</span>
+            <select id="sortSelect">
+              <option value="recommended">Tavsiya</option>
+              <option value="new">Yangilari</option>
+              <option value="price_asc">Arzonroq</option>
+              <option value="price_desc">Qimmatroq</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid" id="grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div>
+        <p class="brand brand--footer">
+          <span class="brand__mark" aria-hidden="true">🦋</span>
+          <span class="brand__text">Unity <span>Beauty</span></span>
+        </p>
+        <p class="footer__text">Koreya kosmetikasi va sog'liq mahsulotlari — Koreya skladlaridan, buyurtma asosida.</p>
+        <div class="footer__links">
+          <button type="button" class="pill-link" data-link="telegram">
+            <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M21.9 4.6 18.8 19.3c-.2 1-.9 1.3-1.8.8l-4.8-3.6-2.3 2.2c-.3.3-.5.5-1 .5l.3-4.9 8.9-8c.4-.4-.1-.6-.6-.2L6.5 13 1.8 11.5c-1-.3-1-1 .2-1.5L20.5 2.9c.9-.3 1.6.2 1.4 1.7z"/></svg>
+            @unitybeautykr
+          </button>
+          <button type="button" class="pill-link" data-link="instagram">
+            <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            unity.beauty.kr
+          </button>
+        </div>
+      </div>
+      <div>
+        <h3 class="footer__title">Qanday buyurtma beriladi?</h3>
+        <ol class="steps">
+          <li><span><b>Tanlang</b> — yoqqan mahsulotlarni savatga qo'shing</span></li>
+          <li><span><b>Yuboring</b> — savatni Telegram orqali sotuvchiga jo'nating</span></li>
+          <li><span><b>Tasdiqlang</b> — sotuvchi narx va yetkazib berishni aniqlashtiradi</span></li>
+        </ol>
+      </div>
     </div>
-  </div>
-</div>
-
-<!-- Корзина -->
-<div class="modal" id="cartModal">
-  <div class="modal-box">
-    <h2>Savat</h2>
-    <div id="cartList"></div>
-    <div class="cart-total" id="cartTotal" style="display:none"></div>
-    <button class="save-btn" id="cartOrderBtn" onclick="sendCartToSeller()" style="display:none">
-      Sotuvchiga yuborish
-    </button>
-    <button class="close-btn" onclick="closeCart()">Yopish</button>
-  </div>
-</div>
-
-  <footer style="text-align:center;padding:24px 16px;font-size:11px;color:#bbb;border-top:1px solid #eee;margin-top:8px">
-    © 2026 Unity Beauty 🦋 · Barcha huquqlar himoyalangan<br>
-    Sayt muallifi: <a href="https://t.me/eyf1n" style="color:#bbb;text-decoration:none">@eyf1n</a>
+    <p class="footer__copy">© 2026 Unity Beauty · Sayt muallifi <a href="https://t.me/eyf1n" data-link="author">@eyf1n</a></p>
   </footer>
 
-  <script src="script.js?v=21"></script>
+  <div class="cartbar" id="cartBar" aria-hidden="true">
+    <button type="button" class="cartbar__btn" id="cartBarBtn" tabindex="-1">
+      <span class="cartbar__icon" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l-1 13H7z"/><path d="M9 7V6a3 3 0 0 1 6 0v1"/></svg>
+      </span>
+      <span class="cartbar__info">
+        <span class="cartbar__count" id="cartBarCount"></span>
+        <span class="cartbar__total" id="cartBarTotal"></span>
+      </span>
+      <span class="cartbar__cta">Savat</span>
+    </button>
+  </div>
 
+  <div class="sheet sheet--product" id="productSheet" role="dialog" aria-modal="true" aria-labelledby="pdName" hidden>
+    <div class="sheet__backdrop" data-close></div>
+    <div class="sheet__panel">
+      <span class="sheet__grip" aria-hidden="true"></span>
+      <button type="button" class="sheet__close" data-close aria-label="Yopish">
+        <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="sheet__scroll">
+        <div class="gallery">
+          <div class="gallery__track scroll-x" id="pdTrack"></div>
+          <span class="gallery__counter" id="pdCounter" hidden></span>
+          <button type="button" class="gallery__nav gallery__nav--prev" id="pdPrev" aria-label="Oldingi rasm" hidden>
+            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <button type="button" class="gallery__nav gallery__nav--next" id="pdNext" aria-label="Keyingi rasm" hidden>
+            <svg class="icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+          <div class="gallery__dots" id="pdDots" hidden></div>
+        </div>
+        <div class="pd" id="pdInfo"></div>
+      </div>
+      <div class="sheet__footer" id="pdActions"></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="cartSheet" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
+    <div class="sheet__backdrop" data-close></div>
+    <div class="sheet__panel">
+      <span class="sheet__grip" aria-hidden="true"></span>
+      <div class="sheet__head">
+        <h2 id="cartTitle">Savat <span class="sheet__head-count" id="cartTitleCount"></span></h2>
+        <button type="button" class="sheet__close sheet__close--inline" data-close aria-label="Yopish">
+          <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="sheet__scroll" id="cartBody"></div>
+      <div class="sheet__footer sheet__footer--stack" id="cartFoot" hidden></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script defer src="js/config.js?v=30"></script>
+  <script defer src="js/errors.js?v=30"></script>
+  <script defer src="js/utils.js?v=30"></script>
+  <script defer src="js/icons.js?v=30"></script>
+  <script defer src="js/telegram.js?v=30"></script>
+  <script defer src="js/currency.js?v=30"></script>
+  <script defer src="js/data.js?v=30"></script>
+  <script defer src="js/cart.js?v=30"></script>
+  <script defer src="js/sheet.js?v=30"></script>
+  <script defer src="js/ui-catalog.js?v=30"></script>
+  <script defer src="js/ui-product.js?v=30"></script>
+  <script defer src="js/ui-cart.js?v=30"></script>
+  <script defer src="js/app.js?v=30"></script>
 </body>
 </html>

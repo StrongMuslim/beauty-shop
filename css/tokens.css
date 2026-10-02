@@ -1,0 +1,89 @@
+:root {
+  color-scheme: light;
+  --font: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --bg: #faf7f5;
+  --surface: #ffffff;
+  --surface-2: #f4efed;
+  --surface-3: #e9e2df;
+  --ink: #1d191b;
+  --ink-2: #4b4447;
+  --muted: #8d8488;
+  --line: #ebe4e1;
+  --line-strong: #dcd2ce;
+
+  --accent: #c24d76;
+  --accent-hover: #ad3f66;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbeaf0;
+
+  --gold: #9a6a1f;
+  --gold-soft: #fbf0dc;
+  --ok: #2c7a52;
+  --ok-soft: #e4f3ea;
+  --warn: #965f10;
+  --warn-soft: #fcefd6;
+  --danger: #b23c3c;
+  --danger-soft: #fbe7e7;
+
+  --media-bg: #ffffff;
+  --shimmer-a: #f1ebe8;
+  --shimmer-b: #e6ddd9;
+  --backdrop: rgba(22, 16, 19, .46);
+  --on-media: rgba(255, 255, 255, .92);
+
+  --shadow-sm: 0 1px 2px rgba(29, 25, 27, .05), 0 2px 10px rgba(29, 25, 27, .04);
+  --shadow-md: 0 10px 30px rgba(29, 25, 27, .10);
+  --shadow-up: 0 -10px 40px rgba(29, 25, 27, .16);
+  --shadow-float: 0 12px 32px rgba(29, 25, 27, .24);
+
+  --r-sm: 10px;
+  --r: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+
+  --ease: cubic-bezier(.22, .8, .24, 1);
+  --dur: 300ms;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --page-x: 16px;
+  --maxw: 1200px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #121012;
+  --surface: #1b181a;
+  --surface-2: #242022;
+  --surface-3: #312b2e;
+  --ink: #f5eff1;
+  --ink-2: #d2c9cc;
+  --muted: #9d9397;
+  --line: #2c2729;
+  --line-strong: #3b3538;
+
+  --accent: #ee7fa1;
+  --accent-hover: #f494b1;
+  --accent-ink: #1b0d13;
+  --accent-soft: #3a1f2a;
+
+  --gold: #e8bb66;
+  --gold-soft: #3a2e17;
+  --ok: #6fd19c;
+  --ok-soft: #173326;
+  --warn: #f0b85a;
+  --warn-soft: #3a2c13;
+  --danger: #f08a8a;
+  --danger-soft: #3d1c1c;
+
+  --media-bg: #ffffff;
+  --shimmer-a: #221e20;
+  --shimmer-b: #2e292b;
+  --backdrop: rgba(0, 0, 0, .62);
+  --on-media: rgba(27, 24, 26, .9);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .35);
+  --shadow-md: 0 10px 30px rgba(0, 0, 0, .45);
+  --shadow-up: 0 -10px 40px rgba(0, 0, 0, .55);
+  --shadow-float: 0 12px 32px rgba(0, 0, 0, .5);
+}
